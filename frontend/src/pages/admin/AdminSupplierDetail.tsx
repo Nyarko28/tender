@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { User } from '@/types';
@@ -49,7 +48,10 @@ export function AdminSupplierDetail() {
     mutationFn: () => suppliersService.approve(supplierId, 'approve'),
     onSuccess: () => {
       toastSuccess('Supplier approved');
+      // Refetch from server so status updates everywhere
       queryClient.invalidateQueries({ queryKey: ['supplier', supplierId] });
+      // Invalidate all admin-suppliers queries (any page/filters)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'suppliers'], exact: false });
     },
     onError: (e) => toastError(e instanceof Error ? e.message : 'Failed'),
   });
@@ -89,6 +91,15 @@ export function AdminSupplierDetail() {
     onError: (e) => toastError(e instanceof Error ? e.message : 'Failed'),
   });
 
+  const profile = (supplier as User)?.profile ?? (supplier as User)?.supplier_profile;
+  const backendStatus = supplier?.status;
+  const profileApproved =
+    !!profile && (profile as { is_approved?: boolean | number }).is_approved === true;
+  const effectiveStatus =
+    approveMutation.isSuccess || (backendStatus === 'pending' && profileApproved)
+      ? 'active'
+      : backendStatus;
+
   if (isLoading || !supplier) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -97,7 +108,6 @@ export function AdminSupplierDetail() {
     );
   }
 
-  const profile = (supplier as User).profile ?? (supplier as User).supplier_profile;
   const ratingSummary = (supplier as User & { rating_summary?: { average_overall: number | null; total_contracts_rated: number } }).rating_summary;
 
   return (
@@ -118,7 +128,7 @@ export function AdminSupplierDetail() {
                 ) : (
                   <span className="text-sm text-gray-500">No ratings yet</span>
                 )}
-                <Badge>{supplier.status}</Badge>
+                <Badge>{effectiveStatus}</Badge>
                 {isBlacklisted && (
                   <Badge variant="destructive">Blacklisted</Badge>
                 )}
@@ -136,10 +146,10 @@ export function AdminSupplierDetail() {
                   Lift Blacklist
                 </Button>
               )}
-              {supplier.status === 'pending' && (
+              {effectiveStatus === 'pending' && (
                 <Button onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>Approve</Button>
               )}
-              {supplier.status === 'active' && (
+              {effectiveStatus === 'active' && (
                 <Button variant="destructive" onClick={() => suspendMutation.mutate()} disabled={suspendMutation.isPending}>Suspend</Button>
               )}
             </div>
