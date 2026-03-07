@@ -43,8 +43,13 @@ RUN mkdir -p /var/www/html/uploads && \
 # Set environment variables
 ENV APP_ENV=production
 
-# Expose port 80
+# Start PHP-FPM and Nginx using supervisor
+RUN apt-get install -y supervisor
+
+RUN mkdir -p /var/log/supervisor
+
+RUN echo '[supervisord]\nnodaemon=true\n\n[program:php-fpm]\ncommand=/usr/local/sbin/php-fpm\nautorestart=true\n\n[program:nginx]\ncommand=/usr/sbin/nginx -g "daemon off;"\nautorestart=true' > /etc/supervisor/conf.d/supervisord.conf
+
 EXPOSE 80
 
-# Start PHP-FPM and Nginx
-CMD service php8.2-fpm start && nginx -g 'daemon off;'
+CMD ["/usr/bin/supervisord"]
