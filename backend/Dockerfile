@@ -4,14 +4,9 @@ FROM php:8.2-apache
 # Install required PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Fix Apache MPM conflict - disable mpm_worker, only keep mpm_prefork
-RUN a2dismod mpm_worker && a2enmod mpm_prefork
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Enable Apache headers module (needed for CORS)
-RUN a2enmod headers
+# Fix Apache MPM conflict - disable all MPMs then enable only prefork
+RUN a2dismod mpm_worker mpm_event mpm_prefork 2>/dev/null || true
+RUN a2enmod mpm_prefork rewrite headers
 
 # Set working directory
 WORKDIR /var/www/html
