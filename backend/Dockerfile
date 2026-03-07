@@ -4,9 +4,18 @@ FROM php:8.2-apache
 # Install required PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Fix Apache MPM conflict - remove conflicting mpm_event module
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
-    /etc/apache2/mods-available/mpm_event.load /etc/apache2/mods-available/mpm_event.conf 2>/dev/null || true
+# Fix Apache MPM conflict - explicitly configure only mpm_prefork
+RUN echo "# Force only mpm_prefork" > /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "<IfModule mpm_prefork_module>" >> /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "    StartServers             5" >> /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "    MinSpareServers          5" >> /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "    MaxSpareServers         10" >> /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "    MaxRequestWorkers      150" >> /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "    MaxConnectionsPerChild   0" >> /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    echo "</IfModule>" >> /etc/apache2/mods-enabled/mpm_prefork.conf
+
+# Remove mpm_event to prevent conflict
+RUN a2dismod mpm_event 2>/dev/null || true
 
 # Enable required Apache modules
 RUN a2enmod rewrite headers
