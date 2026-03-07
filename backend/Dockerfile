@@ -7,25 +7,32 @@ RUN docker-php-ext-install pdo pdo_mysql
 # Install nginx
 RUN apt-get update && apt-get install -y nginx
 
-# Create nginx configuration
+# Create nginx configuration - handles both API and static files
 RUN echo 'server { \
     listen 80; \
     server_name localhost; \
     root /var/www/html; \
-    index index.php index.html; \
     \
-    location / { \
-        try_files $uri $uri/ /index.php?$query_string; \
+    # API routing - /api/* -> /api/*.php \
+    location /api/ { \
+        try_files $uri $uri/ /api$uri.php?$query_string; \
     } \
     \
-    location ~ \.php$ { \
-        try_files $uri =404; \
-        fastcgi_split_path_info ^(.+\.php)(/.+)$; \
+    # PHP processing for API \
+    location ~ ^/api(.+\.php)$ { \
+        try_files $1 =404; \
+        fastcgi_split_path_info ^/api(.+\.php)(/.+)$; \
         fastcgi_pass unix:/var/run/php/php8.2-fpm.sock; \
         fastcgi_index index.php; \
         include fastcgi_params; \
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
+        fastcgi_param SCRIPT_FILENAME $document_root/api$fastcgi_script_name; \
         fastcgi_param PATH_INFO $fastcgi_path_info; \
+        fastcgi_param REQUEST_URI $request_uri; \
+    } \
+    \
+    # Root index.html for testing \
+    location / { \
+        try_files $uri $uri/ /index.html; \
     } \
     \
     location ~ /\.ht { \
