@@ -36,30 +36,42 @@ function loadEnv(string $path): void
 $envPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env';
 loadEnv($envPath);
 
-// Support Railway environment variables (uppercase with different names)
+// Helper function to get environment variable
+function getEnvVar(string $name, string $default = ''): string
+{
+    // Check getenv() first (works for Railway)
+    $value = getenv($name);
+    if ($value !== false && $value !== '') {
+        return $value;
+    }
+    
+    // Check $_ENV
+    if (isset($_ENV[$name]) && $_ENV[$name] !== '') {
+        return $_ENV[$name];
+    }
+    
+    return $default;
+}
+
 // Railway provides: MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD
-// Also support: DB_HOST, DB_NAME, DB_USER, DB_PASS
+// Also support: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
 
-$host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?? 
-        $_ENV['MYSQLHOST'] ?? getenv('MYSQLHOST') ?? 
-        'localhost';
+// Get host - prioritize Railway variables
+$host = getEnvVar('MYSQLHOST') ?: getEnvVar('DB_HOST') ?: 'localhost';
 
-$port = $_ENV['DB_PORT'] ?? getenv('DB_PORT') ?? 
-         $_ENV['MYSQLPORT'] ?? getenv('MYSQLPORT') ?? 
-         '3306';
+// Get port
+$port = getEnvVar('MYSQLPORT') ?: getEnvVar('DB_PORT') ?: '3306';
 
-$name = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?? 
-        $_ENV['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') ?? 
-        'supplier_eval';
+// Get database name
+$name = getEnvVar('MYSQLDATABASE') ?: getEnvVar('DB_NAME') ?: 'railway';
 
-$user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?? 
-        $_ENV['MYSQLUSER'] ?? getenv('MYSQLUSER') ?? 
-        'root';
+// Get username
+$user = getEnvVar('MYSQLUSER') ?: getEnvVar('DB_USER') ?: 'root';
 
-$pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?? 
-        $_ENV['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') ?? 
-        '';
+// Get password
+$pass = getEnvVar('MYSQLPASSWORD') ?: getEnvVar('DB_PASS') ?: '';
 
+// Build DSN
 $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
 
 $options = [
@@ -72,11 +84,21 @@ try {
     // Using $GLOBALS ensures PDO is accessible across all include scopes
     $GLOBALS['pdo'] = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
+    // Log error server-side but don't expose sensitive data
+    error_log("Database connection failed: " . $e->getMessage());
+    
     header('Content-Type: application/json');
     http_response_code(500);
     echo json_encode([
         'success' => false, 
-        'message' => 'Database connection failed: ' . $e->getMessage()
+        'message' => 'Database connection failed',
+        'debug' => [
+            'host' => $host,
+            'port' => $port,
+            'database' => $name,
+            'user' => $user
+            // Note: password not included for security
+        ]
     ]);
     exit;
 }
