@@ -8,7 +8,7 @@ import { CategoryBadge } from '@/components/tenders/CategoryBadge';
 import { TagChip } from '@/components/tenders/TagChip';
 import { ExportButton } from '@/components/ui/ExportButton';
 import { toastSuccess, toastError } from '@/hooks/useToast';
-import { getCategoryAsset } from '@/utils/categoryAssets';
+import { getCategoryAsset, getTenderImage } from '@/utils/categoryAssets';
 import { exportToExcel } from '@/utils/exportExcel';
 import { Plus, Eye, Pencil, Trash2, Send, XCircle, FileText, DollarSign, Inbox, Calendar, AlertTriangle } from 'lucide-react';
 
@@ -132,7 +132,7 @@ function TenderCard({ tender, onPublish, onClose, onDelete, isPublishing, isClos
       {/* Image Banner */}
       <div className="relative h-[120px] w-full overflow-hidden">
         <img
-          src={categoryAsset.image}
+          src={getTenderImage(tender)}
           alt={tender.category_name || 'Tender'}
           className="h-full w-full object-cover"
         />

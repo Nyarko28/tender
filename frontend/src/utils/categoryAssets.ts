@@ -1,3 +1,85 @@
+// Common stop words to remove from tender titles
+const STOP_WORDS = [
+  'supply of',
+  'purchase of',
+  'provision of',
+  'request for',
+  'procurement of',
+  'tender for',
+  'contract for',
+  'services for',
+  'works for',
+  'supply of',
+  'delivery of',
+  'installation of',
+];
+
+/**
+ * Extracts a keyword from tender title by removing common stop words
+ * @param title - The tender title
+ * @returns The extracted keyword or null if too short
+ */
+export function extractKeyword(title: string | null | undefined): string | null {
+  if (!title) return null;
+  
+  let keyword = title.toLowerCase().trim();
+  
+  // Remove each stop word from the beginning of the title
+  for (const stopWord of STOP_WORDS) {
+    if (keyword.startsWith(stopWord)) {
+      keyword = keyword.slice(stopWord.length).trim();
+      break; // Only remove one stop word from the start
+    }
+  }
+  
+  // Also check for stop words with different casing or trailing spaces
+  for (const stopWord of STOP_WORDS) {
+    const regex = new RegExp(`^${stopWord}\\s+`, 'i');
+    keyword = keyword.replace(regex, '');
+  }
+  
+  // Get the first meaningful word (after removing stop words)
+  const words = keyword.split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return null;
+  
+  // Return first 1-2 words if they're meaningful
+  const meaningfulWord = words[0];
+  if (meaningfulWord.length < 3) return null; // Too short
+  
+  return meaningfulWord;
+}
+
+/**
+ * Generates a dynamic Unsplash image URL based on tender title and category
+ * @param tender - The tender object with id, title, and category_name
+ * @returns A unique Unsplash image URL
+ */
+export function getTenderImage(tender: { id: number; title: string | null; category_name: string | null }): string {
+  // Get category for the URL (sanitize for URL)
+  const category = tender.category_name 
+    ? tender.category_name.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\s+/g, '+')
+    : 'business';
+  
+  // Extract keyword from title
+  const keyword = extractKeyword(tender.title);
+  
+  // Build the base URL
+  let imageUrl = 'https://images.unsplash.com/photo-1';
+  
+  // Add category and keyword (if available)
+  if (keyword && keyword.length >= 3) {
+    imageUrl += `?${category},${encodeURIComponent(keyword)}`;
+  } else {
+    imageUrl += `?${category}`;
+  }
+  
+  // Add image parameters and seed with tender id for uniqueness
+  imageUrl += '&auto=format&fit=crop&w=800&q=80';
+  imageUrl += `&sig=${tender.id}`;
+  
+  return imageUrl;
+}
+
 export const categoryAssets: Record<string, { image: string; color: string }> = {
   'IT & Technology': {
     image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=70',

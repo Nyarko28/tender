@@ -16,7 +16,7 @@ import { ContactFormCard } from '@/components/landing/ContactFormCard';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTABanner } from '@/components/landing/CTABanner';
 import { Footer } from '@/components/landing/Footer';
-import { getCategoryAsset } from '@/utils/categoryAssets';
+import { getCategoryAsset, getTenderImage } from '@/utils/categoryAssets';
 import { FileText, Clock } from 'lucide-react';
 
 function Navbar() {
@@ -131,7 +131,7 @@ function ActiveTenders() {
               >
                 <div className="relative h-40 overflow-hidden bg-slate-200">
                   <img
-                    src={asset.image}
+                    src={getTenderImage(t)}
                     alt={t.category_name ? `${t.category_name} category` : 'Tender category'}
                     className="h-full w-full object-cover object-center"
                     loading="lazy"
