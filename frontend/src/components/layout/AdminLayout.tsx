@@ -13,6 +13,7 @@ import {
   FileSignature,
   Menu,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
 import { cn } from '@/utils/cn';
@@ -30,6 +31,7 @@ const mainNav = [
 const reportsNav = [
   { to: '/admin/reports', label: 'Reports', icon: BarChart2 },
   { to: '/admin/audit-log', label: 'Audit Log', icon: FileCheck },
+  { to: '/admin/intelligence', label: 'ProcureAI', icon: Sparkles },
 ];
 
 const settingsNav = [
@@ -52,6 +54,7 @@ const pathToTitle: Record<string, string> = {
   '/admin/contracts': 'Contracts',
   '/admin/contracts/create': 'Create Contract',
   '/admin/contracts/': 'Contract Details',
+  '/admin/intelligence': 'ProcureAI',
 };
 
 function getPageTitle(pathname: string): string {

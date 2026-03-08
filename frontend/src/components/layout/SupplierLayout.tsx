@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   LogOut,
+  Sparkles,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { notificationsService } from '@/services/notifications';
@@ -32,6 +33,7 @@ const mainNav = [
 
 const supportNav = [
   { to: '/supplier/notifications', label: 'Notifications', icon: Bell, badge: true },
+  { to: '/supplier/intelligence', label: 'ProcureAI', icon: Sparkles },
   { to: 'mailto:procurement@example.com', label: 'Contact Admin', icon: Phone, external: true },
 ];
 
@@ -46,6 +48,7 @@ const pathToTitle: Record<string, string> = {
   '/supplier/performance': 'Performance',
   '/supplier/profile': 'Profile',
   '/supplier/notifications': 'Notifications',
+  '/supplier/intelligence': 'ProcureAI',
 };
 
 function getPageTitle(pathname: string): string {
