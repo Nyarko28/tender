@@ -83,7 +83,11 @@ function callGemini(string $domainPrompt, string $userMessage, int $maxTokens = 
         throw new Exception('ProcureAI error: ' . $data['error']['message']);
     }
 
-    $result = $response['candidates'][0]['content']['parts'][0]['text'];
+    if (empty($data['candidates'])) {
+        throw new Exception('No candidates in Gemini response: ' . json_encode($data));
+    }
+    
+    $result = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
     if (!$result) throw new Exception('ProcureAI returned an empty response. Please try again.');
 
     return $result;
@@ -138,7 +142,18 @@ function callGeminiChat(string $domainPrompt, array $history, string $userMessag
     if ($error) throw new Exception('ProcureAI chat failed: ' . $error);
 
     $data = json_decode($response, true);
-    $result = $data['candidates'][0]['content']['parts'][0]['text'];
+    
+    // Check for Gemini API error
+    if (isset($data['error'])) {
+        throw new Exception('Gemini API error: ' . $data['error']['message']);
+    }
+    
+    // Check for candidates
+    if (empty($data['candidates'])) {
+        throw new Exception('No candidates in Gemini response: ' . json_encode($data));
+    }
+    
+    $result = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
     if (!$result) throw new Exception('ProcureAI returned an empty response.');
 
     return $result;
