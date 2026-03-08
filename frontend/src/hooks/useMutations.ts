@@ -1,6 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
-import { toast } from 'react-hot-toast';
+
+// Helper to show alerts (replace with your toast library if available)
+const showToast = (message: string, type: 'success' | 'error') => {
+  // Using console for now - replace with your toast implementation
+  if (type === 'success') {
+    console.log('✅ ' + message);
+    alert(message);
+  } else {
+    console.error('❌ ' + message);
+    alert(message);
+  }
+};
 
 // Submit bid mutation
 export const useSubmitBid = () => {
@@ -17,11 +28,11 @@ export const useSubmitBid = () => {
       queryClient.invalidateQueries({ queryKey: ['tender', variables.tender_id] });
       queryClient.invalidateQueries({ queryKey: ['tenders'] });
 
-      toast.success('Bid submitted successfully!');
+      showToast('Bid submitted successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to submit bid');
+      showToast(err.response?.data?.message || 'Failed to submit bid', 'error');
     },
   });
 };
@@ -39,11 +50,11 @@ export const useCreateTender = () => {
       queryClient.invalidateQueries({ queryKey: ['tenders'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
 
-      toast.success('Tender created successfully!');
+      showToast('Tender created successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to create tender');
+      showToast(err.response?.data?.message || 'Failed to create tender', 'error');
     },
   });
 };
@@ -61,11 +72,11 @@ export const useUpdateTender = () => {
       queryClient.invalidateQueries({ queryKey: ['tenders'] });
       queryClient.invalidateQueries({ queryKey: ['tender', variables.id] });
 
-      toast.success('Tender updated successfully!');
+      showToast('Tender updated successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to update tender');
+      showToast(err.response?.data?.message || 'Failed to update tender', 'error');
     },
   });
 };
@@ -84,11 +95,11 @@ export const useAwardTender = () => {
       queryClient.invalidateQueries({ queryKey: ['bids'] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
 
-      toast.success('Tender awarded successfully!');
+      showToast('Tender awarded successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to award tender');
+      showToast(err.response?.data?.message || 'Failed to award tender', 'error');
     },
   });
 };
@@ -104,11 +115,11 @@ export const useDeleteTender = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenders'] });
-      toast.success('Tender deleted successfully!');
+      showToast('Tender deleted successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to delete tender');
+      showToast(err.response?.data?.message || 'Failed to delete tender', 'error');
     },
   });
 };
@@ -125,11 +136,11 @@ export const useApproveSupplier = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplier'] });
-      toast.success('Supplier approved successfully!');
+      showToast('Supplier approved successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to approve supplier');
+      showToast(err.response?.data?.message || 'Failed to approve supplier', 'error');
     },
   });
 };
@@ -145,11 +156,11 @@ export const useCreateContract = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      toast.success('Contract created successfully!');
+      showToast('Contract created successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to create contract');
+      showToast(err.response?.data?.message || 'Failed to create contract', 'error');
     },
   });
 };
@@ -165,11 +176,11 @@ export const useCreateCategory = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Category created successfully!');
+      showToast('Category created successfully!', 'success');
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to create category');
+      showToast(err.response?.data?.message || 'Failed to create category', 'error');
     },
   });
 };

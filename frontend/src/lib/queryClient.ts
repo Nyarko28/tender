@@ -10,7 +10,7 @@ export const queryClient = new QueryClient({
 
       // Cache settings
       staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-      cacheTime: 10 * 60 * 1000, // 10 minutes - keep in cache
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache (formerly cacheTime)
 
       // Error handling
       retry: 1,
@@ -28,7 +28,7 @@ export const QueryConfig = {
   // For static data that rarely changes
   static: {
     staleTime: 30 * 60 * 1000, // 30 minutes
-    cacheTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   },
@@ -36,7 +36,7 @@ export const QueryConfig = {
   // For data that should update periodically in background
   semiRealtime: {
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     refetchOnMount: false,
   },
@@ -51,7 +51,7 @@ export const QueryConfig = {
   // For one-time fetch data (details pages)
   detail: {
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnMount: false,
   },
 };
