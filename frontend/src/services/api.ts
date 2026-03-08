@@ -1,15 +1,19 @@
 import axios, { type AxiosError } from 'axios';
 
 function resolveApiBaseUrl(): string {
-  const raw = (import.meta.env.VITE_API_BASE_URL ?? '').trim();
+  // Primary: Use VITE_API_URL from environment (set in Vercel)
+  const envUrl = (import.meta.env.VITE_API_URL ?? '').trim();
+  if (envUrl) return envUrl;
 
-  // If VITE_API_BASE_URL is set, use it (for Vercel or production)
-  if (raw) return raw;
+  // Fallback: Use VITE_API_BASE_URL if set
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim();
+  if (baseUrl) return baseUrl;
 
-  // Dev defaults to Vite proxy (/api). When serving built app from Apache/XAMPP,
-  // /api is typically not proxied—use the real backend path instead.
-  if (import.meta.env.DEV) return '/api';
-  return '/suppy_tender/backend/api';
+  // Development: Use localhost
+  if (import.meta.env.DEV) return 'http://localhost:8080/api';
+
+  // Production fallback (should not reach here if env vars are set)
+  return 'http://localhost:8080/api';
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();
