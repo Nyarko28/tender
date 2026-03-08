@@ -44,7 +44,12 @@ export function AdminReports() {
     </div>
   );
 
-  const { tenders, bids, suppliers, contracts } = data || { tenders: {}, bids: {}, suppliers: {}, contracts: {} };
+  const { tenders, bids, suppliers, contracts } = data || { 
+    tenders: { total: 0, open: 0, closed: 0, awarded: 0, draft: 0, total_value: 0, by_category: [], by_month: [] }, 
+    bids: { total: 0, submitted: 0, accepted: 0, rejected: 0, avg_per_tender: 0, by_month: [] }, 
+    suppliers: { total: 0, active: 0, pending: 0, suspended: 0, by_month: [], top_bidders: [] }, 
+    contracts: { total: 0, active: 0, completed: 0, draft: 0, total_value: 0 } 
+  };
 
   // ── KPI cards ─────────────────────────────────────────────
   const kpis = [
