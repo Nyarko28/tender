@@ -16,7 +16,7 @@ import { ContactFormCard } from '@/components/landing/ContactFormCard';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTABanner } from '@/components/landing/CTABanner';
 import { Footer } from '@/components/landing/Footer';
-import { getCategoryAsset, getTenderImage } from '@/utils/categoryAssets';
+import { getCategoryAsset, getTenderImage, getFallbackImage } from '@/utils/categoryAssets';
 import { FileText, Clock } from 'lucide-react';
 
 function Navbar() {
@@ -136,6 +136,9 @@ function ActiveTenders() {
                     className="h-full w-full object-cover object-center"
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => {
+                      e.currentTarget.src = getFallbackImage(t.category_name);
+                    }}
                   />
                   <div
                     className="absolute inset-0 opacity-30"

@@ -8,7 +8,7 @@ import { CategoryBadge } from '@/components/tenders/CategoryBadge';
 import { TagChip } from '@/components/tenders/TagChip';
 import { ExportButton } from '@/components/ui/ExportButton';
 import { toastSuccess, toastError } from '@/hooks/useToast';
-import { getCategoryAsset, getTenderImage } from '@/utils/categoryAssets';
+import { getCategoryAsset, getTenderImage, getFallbackImage } from '@/utils/categoryAssets';
 import { exportToExcel } from '@/utils/exportExcel';
 import { Plus, Eye, Pencil, Trash2, Send, XCircle, FileText, DollarSign, Inbox, Calendar, AlertTriangle } from 'lucide-react';
 
@@ -46,7 +46,12 @@ function getTimeLeft(deadline: string): { text: string; urgent: boolean; passed:
 function TenderCard({ tender, onPublish, onClose, onDelete, isPublishing, isClosing, isDeleting }: TenderCardProps) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(tender.submission_deadline));
   const categoryAsset = getCategoryAsset(tender.category_name);
+  const [imageSrc, setImageSrc] = useState(() => getTenderImage(tender));
   const navigate = useNavigate();
+
+  const handleImageError = () => {
+    setImageSrc(getFallbackImage(tender.category_name));
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -132,9 +137,10 @@ function TenderCard({ tender, onPublish, onClose, onDelete, isPublishing, isClos
       {/* Image Banner */}
       <div className="relative h-[120px] w-full overflow-hidden">
         <img
-          src={getTenderImage(tender)}
+          src={imageSrc}
           alt={tender.category_name || 'Tender'}
           className="h-full w-full object-cover"
+          onError={handleImageError}
         />
         <div className="absolute inset-0" style={{ backgroundColor: `${categoryAsset.color}35` }} />
         

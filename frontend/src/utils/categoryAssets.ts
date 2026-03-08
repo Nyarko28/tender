@@ -54,7 +54,7 @@ export function extractKeyword(title: string | null | undefined): string | null 
  * @param title - The tender title
  * @returns The first two words or null if too short
  */
-export function extractTitleKeyword(title: string | null | undefined): string | null {
+export function extractCleanTitle(title: string | null | undefined): string | null {
   if (!title) return null;
   
   let keyword = title.toLowerCase().trim();
@@ -95,20 +95,34 @@ export function getTenderImage(tender: { id: number; title?: string | null; cate
     ? tender.category_name.toLowerCase().replace(/[^a-z0-9]/g, '+').replace(/\s+/g, '+')
     : 'business';
   
-  // Extract title keyword (first two words after removing stop words)
-  const titleKeyword = extractTitleKeyword(tender.title ?? null);
+  // Extract clean title (first two words after removing stop words)
+  const cleanTitle = extractCleanTitle(tender.title ?? null);
   
   // Build the base URL using stable photo-1 endpoint
   let imageUrl = 'https://images.unsplash.com/photo-1';
   
-  // Add query parameter with category and title keyword
-  if (titleKeyword && titleKeyword.length >= 3) {
-    imageUrl += `?auto=format&fit=crop&q=60&w=800&sig=${tender.id}&query=${encodeURIComponent(category)},${encodeURIComponent(titleKeyword)}`;
+  // Add query parameter with category and cleanTitle
+  if (cleanTitle && cleanTitle.length >= 3) {
+    imageUrl += `?auto=format&fit=crop&q=60&w=800&sig=${tender.id}&query=${encodeURIComponent(category)},${encodeURIComponent(cleanTitle)}`;
   } else {
     imageUrl += `?auto=format&fit=crop&q=60&w=800&sig=${tender.id}&query=${encodeURIComponent(category)}`;
   }
   
   return imageUrl;
+}
+
+/**
+ * Returns a fallback image URL for when the main image fails to load
+ * @param categoryName - Optional category name for context
+ * @returns A generic fallback image URL
+ */
+export function getFallbackImage(categoryName?: string | null): string {
+  // Use category-based fallback or default to business/technology
+  const fallbackQuery = categoryName?.toLowerCase().includes('it') || categoryName?.toLowerCase().includes('technology') 
+    ? 'technology' 
+    : 'business';
+  
+  return `https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=60&w=800&sig=fallback&query=${fallbackQuery}`;
 }
 
 export const categoryAssets: Record<string, { image: string; color: string }> = {
