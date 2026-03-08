@@ -50,7 +50,7 @@ try {
     logAudit($currentUser['id'], 'ai_request', 'tender', null, 'feature: tender_writer');
     $raw    = callGemini($domainPrompt, $userMessage, 2000);
     $parsed = extractJSON($raw);
-    jsonSuccess($parsed);
+    echo json_encode(['success' => true, 'reply' => json_encode($parsed)]);
 } catch (Exception $e) {
-    jsonError('ProcureAI could not generate the tender right now. Please try again.');
+    echo json_encode(['success' => false, 'reply' => 'ProcureAI could not generate the tender right now. Please try again.']);
 }

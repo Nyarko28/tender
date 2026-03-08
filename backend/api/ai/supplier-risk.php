@@ -18,7 +18,10 @@ $cached = $db->queryOne(
      WHERE cache_key = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
     ["supplier_risk_{$supplier_id}"]
 );
-if ($cached) jsonSuccess(json_decode($cached['result'], true));
+if ($cached) {
+    echo json_encode(['success' => true, 'reply' => $cached['result']]);
+    exit;
+}
 
 $supplier = $db->queryOne("
     SELECT u.name, u.created_at, u.status,
@@ -81,7 +84,7 @@ try {
     );
 
     logAudit($currentUser['id'], 'ai_request', 'supplier', $supplier_id, 'feature: risk_analyzer');
-    jsonSuccess($parsed);
+    echo json_encode(['success' => true, 'reply' => json_encode($parsed)]);
 } catch (Exception $e) {
-    jsonError('ProcureAI risk analysis is unavailable right now. Please try again.');
+    echo json_encode(['success' => false, 'reply' => 'ProcureAI risk analysis is unavailable right now. Please try again.']);
 }

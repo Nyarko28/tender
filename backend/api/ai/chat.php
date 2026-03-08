@@ -49,7 +49,7 @@ RESPONSE GUIDELINES:
 try {
     $reply = callGeminiChat($domainPrompt, $history, $message, 1000);
     logAudit($currentUser['id'], 'ai_request', 'chat', null, 'feature: procureai_chat');
-    jsonSuccess(['reply' => $reply]);
+    echo json_encode(['success' => true, 'reply' => $reply]);
 } catch (Exception $e) {
-    jsonError('ProcureAI is temporarily unavailable. Please try again in a moment.');
+    echo json_encode(['success' => false, 'reply' => 'ProcureAI is temporarily unavailable. Please try again in a moment.']);
 }

@@ -35,8 +35,8 @@ PERSONALITY & TONE:
 
 // ─── Single-turn Gemini call (for analysis, generation, evaluation) ────────────
 function callGemini(string $domainPrompt, string $userMessage, int $maxTokens = 1500): string {
-    $apiKey = getenv('GEMINI_API_KEY');
-    $model  = getenv('GEMINI_MODEL') ?: 'gemini-1.5-flash';
+    $apiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+    $model  = $_ENV['GEMINI_MODEL'] ?? getenv('GEMINI_MODEL') ?? 'gemini-1.5-flash';
     $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
     // Check if API key is configured
@@ -83,16 +83,16 @@ function callGemini(string $domainPrompt, string $userMessage, int $maxTokens = 
         throw new Exception('ProcureAI error: ' . $data['error']['message']);
     }
 
-    $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
-    if (!$text) throw new Exception('ProcureAI returned an empty response. Please try again.');
+    $result = $response['candidates'][0]['content']['parts'][0]['text'];
+    if (!$result) throw new Exception('ProcureAI returned an empty response. Please try again.');
 
-    return $text;
+    return $result;
 }
 
 // ─── Multi-turn chat (for ProcureAI chat feature) ─────────────────────────────
 function callGeminiChat(string $domainPrompt, array $history, string $userMessage, int $maxTokens = 1000): string {
-    $apiKey = getenv('GEMINI_API_KEY');
-    $model  = getenv('GEMINI_MODEL') ?: 'gemini-1.5-flash';
+    $apiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+    $model  = $_ENV['GEMINI_MODEL'] ?? getenv('GEMINI_MODEL') ?? 'gemini-1.5-flash';
     $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
     // Check if API key is configured
@@ -138,10 +138,10 @@ function callGeminiChat(string $domainPrompt, array $history, string $userMessag
     if ($error) throw new Exception('ProcureAI chat failed: ' . $error);
 
     $data = json_decode($response, true);
-    $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
-    if (!$text) throw new Exception('ProcureAI returned an empty response.');
+    $result = $data['candidates'][0]['content']['parts'][0]['text'];
+    if (!$result) throw new Exception('ProcureAI returned an empty response.');
 
-    return $text;
+    return $result;
 }
 
 // ─── JSON extractor (Gemini sometimes wraps JSON in ```json``` blocks) ─────────

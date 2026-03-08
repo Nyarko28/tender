@@ -72,7 +72,7 @@ try {
     logAudit($currentUser['id'], 'ai_request', 'bid', $bid_id, 'feature: bid_evaluator');
     $raw    = callGemini($domainPrompt, $userMessage, 1500);
     $parsed = extractJSON($raw);
-    jsonSuccess($parsed);
+    echo json_encode(['success' => true, 'reply' => json_encode($parsed)]);
 } catch (Exception $e) {
-    jsonError('ProcureAI evaluation is unavailable right now. Please try again.');
+    echo json_encode(['success' => false, 'reply' => 'ProcureAI evaluation is unavailable right now. Please try again.']);
 }

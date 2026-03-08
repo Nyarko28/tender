@@ -79,7 +79,7 @@ try {
     $raw    = callGemini($domainPrompt, $userMessage, 2000);
     $parsed = extractJSON($raw);
     logAudit($currentUser['id'], 'ai_request', 'tender', $tender_id, 'feature: bid_comparison');
-    jsonSuccess($parsed);
+    echo json_encode(['success' => true, 'reply' => json_encode($parsed)]);
 } catch (Exception $e) {
-    jsonError('ProcureAI comparison is unavailable right now. Please try again.');
+    echo json_encode(['success' => false, 'reply' => 'ProcureAI comparison is unavailable right now. Please try again.']);
 }
