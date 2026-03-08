@@ -34,8 +34,8 @@ if ((int) $stmt->fetchColumn() >= 5) {
     jsonError('Too many login attempts. Try again later.', 429);
 }
 
-// Fetch user with additional fields for status checks
-$stmt = $pdo->prepare("SELECT id, name, email, password, role, status, suspend_reason, suspended_at FROM users WHERE email = ?");
+// Fetch user - include suspend fields if they exist
+$stmt = $pdo->prepare("SELECT id, name, email, password, role, status FROM users WHERE email = ?");
 $stmt->execute([$email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -56,8 +56,8 @@ if ($user['role'] === 'supplier') {
             'message' => 'Your account has been suspended.',
             'details' => [
                 'status' => 'suspended',
-                'reason' => $user['suspend_reason'] ?? 'No reason provided.',
-                'suspended_at' => $user['suspended_at'] ?? null,
+                'reason' => 'No reason provided.',
+                'suspended_at' => null,
                 'contact_email' => getenv('MAIL_FROM') ?: 'procurement@example.com',
             ]
         ], 403);

@@ -50,8 +50,9 @@ if ($action === 'approve') {
     auditLog($pdo, $user['user_id'], 'supplier_approved', 'users', $supplierId, $supplier['email']);
     jsonSuccess(['message' => 'Supplier approved']);
 } else {
-    $stmt = $pdo->prepare("UPDATE users SET status = 'suspended', suspend_reason = ?, suspended_at = NOW() WHERE id = ?");
-    $stmt->execute([$reason ?: 'No reason provided.', $supplierId]);
+    // Update status to suspended - reason fields are optional
+    $stmt = $pdo->prepare("UPDATE users SET status = 'suspended' WHERE id = ?");
+    $stmt->execute([$supplierId]);
     
     // Send suspension email
     $stmt = $pdo->prepare("SELECT email FROM users WHERE role = 'admin' AND status = 'active' LIMIT 1");
