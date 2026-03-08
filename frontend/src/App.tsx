@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from '@/hooks/useToast';
@@ -14,6 +14,7 @@ import { AccountBlacklisted } from '@/pages/auth/AccountBlacklisted';
 import { AccountPending } from '@/pages/auth/AccountPending';
 
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { SupplierLayout } from '@/components/layout/SupplierLayout';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { AdminTenders } from '@/pages/admin/AdminTenders';
 import { AdminTenderCreate } from '@/pages/admin/AdminTenderCreate';
@@ -113,69 +114,23 @@ function App() {
             />
 
             <Route
-              path="/supplier/dashboard"
+              path="/supplier"
               element={
                 <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierDashboard />
+                  <SupplierLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/supplier/tenders"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierTenders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/supplier/tenders/:id"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierTenderDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/supplier/bids"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierBids />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/supplier/contracts"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierContracts />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/supplier/contracts/:id"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierContractDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/supplier/performance"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierPerformance />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/supplier/profile"
-              element={
-                <ProtectedRoute allowedRoles={['supplier']}>
-                  <SupplierProfile />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<Navigate to="/supplier/dashboard" replace />} />
+              <Route path="dashboard" element={<SupplierDashboard />} />
+              <Route path="tenders" element={<SupplierTenders />} />
+              <Route path="tenders/:id" element={<SupplierTenderDetail />} />
+              <Route path="bids" element={<SupplierBids />} />
+              <Route path="contracts" element={<SupplierContracts />} />
+              <Route path="contracts/:id" element={<SupplierContractDetail />} />
+              <Route path="performance" element={<SupplierPerformance />} />
+              <Route path="profile" element={<SupplierProfile />} />
+            </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
