@@ -2,16 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { tendersService } from '@/services/tenders';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TenderFilterBar, type TenderFilterState } from '@/components/tenders/TenderFilterBar';
 import { CategoryBadge } from '@/components/tenders/CategoryBadge';
 import { TagChip } from '@/components/tenders/TagChip';
-import { LogOut } from 'lucide-react';
 
 export function SupplierTenders() {
-  const { user, logout } = useAuth();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<TenderFilterState>({ category_id: null, search: '', tag: '' });
   const { data, isLoading } = useQuery({
@@ -25,20 +22,8 @@ export function SupplierTenders() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/supplier/dashboard" className="font-semibold text-primary">Supplier</Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Open Tenders</h1>
+    <div className="p-6">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Open Tenders</h1>
         <TenderFilterBar filters={filters} onFilterChange={setFilters} total={data?.total} />
         {isLoading && (
           <div className="mt-8 flex justify-center">
@@ -86,7 +71,6 @@ export function SupplierTenders() {
             <Button variant="outline" disabled={page * 10 >= data.total} onClick={() => setPage((p) => p + 1)}>Next</Button>
           </div>
         )}
-      </main>
     </div>
   );
 }

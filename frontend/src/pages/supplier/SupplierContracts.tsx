@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { contractService } from '@/services/contractService';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Search, FileText } from 'lucide-react';
+import { Search, FileText } from 'lucide-react';
 import type { ContractStatus } from '@/types';
 
 const statusConfig: Record<ContractStatus, { label: string; className: string }> = {
@@ -22,7 +21,6 @@ function formatCurrency(value: number) {
 }
 
 export function SupplierContracts() {
-  const { user, logout } = useAuth();
   const [search, setSearch] = useState('');
 
   const { data: contracts = [], isLoading } = useQuery({
@@ -31,35 +29,8 @@ export function SupplierContracts() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-6">
-            <Link to="/supplier/dashboard" className="font-semibold text-primary">
-              Supplier
-            </Link>
-            <nav className="flex gap-4">
-              <Link to="/supplier/tenders" className="text-sm text-gray-600 hover:text-primary">
-                Tenders
-              </Link>
-              <Link to="/supplier/contracts" className="text-sm font-medium text-primary">
-                My Contracts
-              </Link>
-              <Link to="/supplier/performance" className="text-sm text-gray-600 hover:text-primary">
-                Performance
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="text-2xl font-bold">My Contracts</h1>
+    <div className="p-6">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">My Contracts</h1>
         <div className="mt-4 flex gap-4">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -113,7 +84,6 @@ export function SupplierContracts() {
             ))}
           </div>
         )}
-      </main>
     </div>
   );
 }

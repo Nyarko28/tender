@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contractService } from '@/services/contractService';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toastSuccess, toastError } from '@/hooks/useToast';
-import { LogOut, ArrowLeft, Check, Clock, Download } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Download } from 'lucide-react';
 import type { ContractStatus, MilestoneStatus } from '@/types';
 
 const statusConfig: Record<ContractStatus, { label: string; className: string }> = {
@@ -33,7 +32,6 @@ function formatCurrency(value: number) {
 export function SupplierContractDetail() {
   const { id } = useParams<{ id: string }>();
   const contractId = id ? parseInt(id, 10) : 0;
-  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [uploadType, setUploadType] = useState('correspondence');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -78,24 +76,10 @@ export function SupplierContractDetail() {
   const bothSigned = contract.signed_by_admin && contract.signed_by_supplier;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/supplier/dashboard" className="font-semibold text-primary">
-            Supplier
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-4xl px-4 py-8">
-        <Link to="/supplier/contracts" className="mb-4 inline-flex items-center text-sm text-primary hover:underline">
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to My Contracts
-        </Link>
+    <div className="p-6">
+      <Link to="/supplier/contracts" className="mb-4 inline-flex items-center text-sm text-primary hover:underline">
+        <ArrowLeft className="mr-1 h-4 w-4" /> Back to My Contracts
+      </Link>
 
         <div className="mb-6">
           <h1 className="text-2xl font-bold">{contract.title}</h1>
@@ -231,7 +215,6 @@ export function SupplierContractDetail() {
             </div>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

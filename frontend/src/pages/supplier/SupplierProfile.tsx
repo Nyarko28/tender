@@ -1,16 +1,13 @@
-import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { suppliersService } from '@/services/suppliers';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toastSuccess, toastError } from '@/hooks/useToast';
-import { LogOut } from 'lucide-react';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -26,7 +23,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function SupplierProfile() {
-  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const { data: supplier, isLoading } = useQuery({
     queryKey: ['supplier', 'profile'],
@@ -59,20 +55,8 @@ export function SupplierProfile() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/supplier/dashboard" className="font-semibold text-primary">Supplier</Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Company Profile</h1>
+    <div className="p-6">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Company Profile</h1>
         {isLoading && (
           <div className="mt-8 flex justify-center">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -126,7 +110,6 @@ export function SupplierProfile() {
             </CardContent>
           </Card>
         )}
-      </main>
     </div>
   );
 }

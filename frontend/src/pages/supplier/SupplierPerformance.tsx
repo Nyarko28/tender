@@ -1,16 +1,12 @@
 import { useState, Fragment } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ratingService } from '@/services/ratingService';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut } from 'lucide-react';
 import { StarRating } from '@/components/ui/StarRating';
 import { RatingBreakdown } from '@/components/ratings/RatingBreakdown';
 
 export function SupplierPerformance() {
-  const { user, logout } = useAuth();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const { data: ratingsData, isLoading } = useQuery({
@@ -19,41 +15,8 @@ export function SupplierPerformance() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-6">
-            <Link to="/supplier/dashboard" className="font-semibold text-primary">
-              Supplier
-            </Link>
-            <nav className="flex gap-4">
-              <Link to="/supplier/tenders" className="text-sm text-gray-600 hover:text-primary">
-                Tenders
-              </Link>
-              <Link to="/supplier/bids" className="text-sm text-gray-600 hover:text-primary">
-                My Bids
-              </Link>
-              <Link to="/supplier/contracts" className="text-sm text-gray-600 hover:text-primary">
-                My Contracts
-              </Link>
-              <Link to="/supplier/performance" className="text-sm font-medium text-primary">
-                Performance
-              </Link>
-              <Link to="/supplier/profile" className="text-sm text-gray-600 hover:text-primary">
-                Profile
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="text-2xl font-bold">My Performance Ratings</h1>
+    <div className="p-6">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">My Performance Ratings</h1>
 
         {isLoading && (
           <div className="mt-8 flex justify-center">
@@ -141,7 +104,6 @@ export function SupplierPerformance() {
             </Card>
           </>
         )}
-      </main>
     </div>
   );
 }

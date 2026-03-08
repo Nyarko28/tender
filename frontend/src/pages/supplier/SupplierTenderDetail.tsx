@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tendersService } from '@/services/tenders';
 import { bidsService } from '@/services/bids';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,12 +10,11 @@ import { Label } from '@/components/ui/label';
 import { toastSuccess, toastError } from '@/hooks/useToast';
 import { CategoryBadge } from '@/components/tenders/CategoryBadge';
 import { TagChip } from '@/components/tenders/TagChip';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export function SupplierTenderDetail() {
   const { id } = useParams<{ id: string }>();
   const tenderId = id ? parseInt(id, 10) : 0;
-  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [bidAmount, setBidAmount] = useState('');
   const [proposal, setProposal] = useState('');
@@ -61,22 +59,10 @@ export function SupplierTenderDetail() {
   const isPast = deadline.getTime() < Date.now();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/supplier/dashboard" className="font-semibold text-primary">Supplier</Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link to="/supplier/tenders" className="mb-4 inline-flex items-center text-sm text-primary hover:underline">
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Tenders
-        </Link>
+    <div className="p-6">
+      <Link to="/supplier/tenders" className="mb-4 inline-flex items-center text-sm text-primary hover:underline">
+        <ArrowLeft className="mr-1 h-4 w-4" /> Back to Tenders
+      </Link>
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">{tender.title}</CardTitle>
@@ -126,7 +112,6 @@ export function SupplierTenderDetail() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

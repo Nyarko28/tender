@@ -1,18 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { bidsService } from '@/services/bids';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ExportButton } from '@/components/ui/ExportButton';
 import { toastSuccess } from '@/hooks/useToast';
 import { exportToExcel } from '@/utils/exportExcel';
-import { LogOut } from 'lucide-react';
 
 export function SupplierBids() {
-  const { user, logout } = useAuth();
   const [page, setPage] = useState(1);
   const { data, isLoading } = useQuery({
     queryKey: ['supplier', 'bids', page],
@@ -33,27 +29,15 @@ export function SupplierBids() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/supplier/dashboard" className="font-semibold text-primary">Supplier</Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user?.name}</span>
-            <Button variant="ghost" size="sm" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">My Bids</h1>
-          <ExportButton
-            label="Export My Bids"
-            onClick={exportMyBids}
-            empty={!data?.items?.length}
-          />
-        </div>
+    <div className="p-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-900">My Bids</h1>
+        <ExportButton
+          label="Export My Bids"
+          onClick={exportMyBids}
+          empty={!data?.items?.length}
+        />
+      </div>
         {isLoading && (
           <div className="mt-8 flex justify-center">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -83,7 +67,6 @@ export function SupplierBids() {
             <Button variant="outline" disabled={page * 10 >= data.total} onClick={() => setPage((p) => p + 1)}>Next</Button>
           </div>
         )}
-      </main>
     </div>
   );
 }
