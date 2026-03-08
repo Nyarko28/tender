@@ -16,14 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Set JSON content type for API responses
+header('Content-Type: application/json');
+
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Root path - return API status
 if ($uri === '/' || $uri === '') {
-    header('Content-Type: application/json');
     echo json_encode([
         'status' => 'online',
-        'message' => 'Tender Management System API'
+        'message' => 'Tender Management System API',
+        'version' => '1.0.0',
+        'timestamp' => date('c')
     ]);
     exit;
 }
@@ -63,7 +66,6 @@ if (strpos($uri, '/api/') === 0) {
 
 // 404 Not Found
 http_response_code(404);
-header('Content-Type: application/json');
 echo json_encode([
     'success' => false,
     'message' => 'Endpoint not found'

@@ -7,6 +7,8 @@
 declare(strict_types=1);
 
 $backendRoot = dirname(__DIR__);
+
+// Load .env file if present
 $envPath = $backendRoot . DIRECTORY_SEPARATOR . '.env';
 if (is_readable($envPath)) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -24,6 +26,26 @@ if (is_readable($envPath)) {
     }
 }
 
-require_once $backendRoot . '/config/cors.php';
+// Include required files
 require_once $backendRoot . '/config/database.php';
+require_once $backendRoot . '/config/cors.php';
 require_once $backendRoot . '/helpers/response.php';
+require_once $backendRoot . '/helpers/validate.php';
+
+// Optionally include JWT config
+$jwtPath = $backendRoot . '/config/jwt.php';
+if (file_exists($jwtPath)) {
+    require_once $jwtPath;
+}
+
+// Optionally include auth middleware
+$authPath = $backendRoot . '/config/auth-middleware.php';
+if (file_exists($authPath)) {
+    require_once $authPath;
+}
+
+// Optionally include audit helper
+$auditPath = $backendRoot . '/helpers/audit.php';
+if (file_exists($auditPath)) {
+    require_once $auditPath;
+}

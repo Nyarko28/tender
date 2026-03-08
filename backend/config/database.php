@@ -1,14 +1,14 @@
-cd backend
-
-cat > config/database.php << 'EOF'
 <?php
 /**
  * Database connection using PDO.
- * Supports Railway environment variables and local .env files.
+ * Supports Railway and local environment variables.
  */
 
 declare(strict_types=1);
 
+/**
+ * Load .env file if present
+ */
 function loadEnv(string $path): void
 {
     if (!is_readable($path)) {
@@ -36,72 +36,49 @@ function loadEnv(string $path): void
 $envPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env';
 loadEnv($envPath);
 
-// Railway provides: MYSQLHOST, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD, MYSQLPORT
-// Also check for alternative naming and local .env
-$host = $_ENV['DB_HOST'] 
-    ?? $_ENV['MYSQLHOST']      // Railway format (no underscore)
-    ?? $_ENV['MYSQL_HOST']     // Alternative format
-    ?? getenv('MYSQLHOST')     // Try getenv
-    ?? getenv('MYSQL_HOST')
-    ?? 'localhost';
+// Support Railway environment variables (uppercase with different names)
+// Railway provides: MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD
+// Also support: DB_HOST, DB_NAME, DB_USER, DB_PASS
 
-$port = $_ENV['DB_PORT']
-    ?? $_ENV['MYSQLPORT']      // Railway format
-    ?? $_ENV['MYSQL_PORT']
-    ?? getenv('MYSQLPORT')
-    ?? getenv('MYSQL_PORT')
-    ?? '3306';
+$host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?? 
+        $_ENV['MYSQLHOST'] ?? getenv('MYSQLHOST') ?? 
+        'localhost';
 
-$name = $_ENV['DB_NAME'] 
-    ?? $_ENV['MYSQLDATABASE']  // Railway format
-    ?? $_ENV['MYSQL_DATABASE']
-    ?? getenv('MYSQLDATABASE')
-    ?? getenv('MYSQL_DATABASE')
-    ?? 'supplier_eval';
+$port = $_ENV['DB_PORT'] ?? getenv('DB_PORT') ?? 
+         $_ENV['MYSQLPORT'] ?? getenv('MYSQLPORT') ?? 
+         '3306';
 
-$user = $_ENV['DB_USER'] 
-    ?? $_ENV['MYSQLUSER']      // Railway format
-    ?? $_ENV['MYSQL_USER']
-    ?? getenv('MYSQLUSER')
-    ?? getenv('MYSQL_USER')
-    ?? 'root';
+$name = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?? 
+        $_ENV['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') ?? 
+        'supplier_eval';
 
-$pass = $_ENV['DB_PASS'] 
-    ?? $_ENV['MYSQLPASSWORD']  // Railway format
-    ?? $_ENV['MYSQL_PASSWORD']
-    ?? getenv('MYSQLPASSWORD')
-    ?? getenv('MYSQL_PASSWORD')
-    ?? '';
+$user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?? 
+        $_ENV['MYSQLUSER'] ?? getenv('MYSQLUSER') ?? 
+        'root';
+
+$pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?? 
+        $_ENV['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') ?? 
+        '';
 
 $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
+    PDO::ATTR_DEFAULT_FETCH_MODE  => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES    => false,
 ];
 
 try {
     // Using $GLOBALS ensures PDO is accessible across all include scopes
     $GLOBALS['pdo'] = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
-    // Log the actual error for debugging
-    error_log('Database connection failed: ' . $e->getMessage());
-    error_log("DSN: mysql:host=$host;port=$port;dbname=$name");
-    
     header('Content-Type: application/json');
     http_response_code(500);
     echo json_encode([
         'success' => false, 
-        'message' => 'Database connection failed',
-        // Uncomment for debugging (remove in production):
-        // 'error' => $e->getMessage(),
-        // 'host' => $host,
-        // 'port' => $port,
-        // 'database' => $name
+        'message' => 'Database connection failed: ' . $e->getMessage()
     ]);
     exit;
 }
 
 $pdo = $GLOBALS['pdo'];
-EOF
