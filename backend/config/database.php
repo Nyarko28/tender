@@ -56,20 +56,20 @@ function getEnvVar(string $name, string $default = ''): string
 // Railway provides: MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD
 // Also support: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
 
-// Get host - prioritize Railway variables
-$host = getEnvVar('MYSQLHOST') ?: getEnvVar('DB_HOST') ?: 'localhost';
+// Get host - check various Railway MySQL variable formats
+$host = getEnvVar('MYSQLHOST') ?: getEnvVar('MYSQL_HOST') ?: getEnvVar('DB_HOST') ?: 'localhost';
 
-// Get port
-$port = getEnvVar('MYSQLPORT') ?: getEnvVar('DB_PORT') ?: '3306';
+// Get port - check various Railway MySQL variable formats
+$port = getEnvVar('MYSQLPORT') ?: getEnvVar('MYSQL_PORT') ?: getEnvVar('DB_PORT') ?: '3306';
 
-// Get database name
-$name = getEnvVar('MYSQLDATABASE') ?: getEnvVar('DB_NAME') ?: 'railway';
+// Get database name - check various Railway MySQL variable formats
+$name = getEnvVar('MYSQLDATABASE') ?: getEnvVar('MYSQL_DATABASE') ?: getEnvVar('DB_NAME') ?: 'railway';
 
-// Get username
-$user = getEnvVar('MYSQLUSER') ?: getEnvVar('DB_USER') ?: 'root';
+// Get username - check various Railway MySQL variable formats
+$user = getEnvVar('MYSQLUSER') ?: getEnvVar('MYSQL_USER') ?: getEnvVar('DB_USER') ?: 'root';
 
-// Get password
-$pass = getEnvVar('MYSQLPASSWORD') ?: getEnvVar('DB_PASS') ?: '';
+// Get password - check various Railway MySQL variable formats
+$pass = getEnvVar('MYSQLPASSWORD') ?: getEnvVar('MYSQL_PASSWORD') ?: getEnvVar('DB_PASS') ?: '';
 
 // Build DSN
 $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
