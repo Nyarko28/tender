@@ -168,14 +168,20 @@ function extractJSON(string $text): array {
 
 // ─── Rate limiter (prevent abuse) ─────────────────────────────────────────────
 function checkAIRateLimit(int $userId, string $feature, int $maxPerHour = 20): void {
-    global $db;
-    $count = $db->queryOne(
-        "SELECT COUNT(*) as cnt FROM audit_log 
+    $pdo = $GLOBALS['pdo'] ?? null;
+    if (!$pdo) {
+        // Skip rate limiting if DB unavailable - allow request
+        return;
+    }
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) as cnt FROM audit_log 
          WHERE user_id = ? AND action = 'ai_request' 
-         AND details LIKE ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)",
-        [$userId, "%{$feature}%"]
-    );
-    if (($count['cnt'] ?? 0) >= $maxPerHour) {
-        jsonError("You have reached the AI usage limit ({$maxPerHour} requests/hour). Please try again later.", 429);
+         AND details LIKE ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+    $stmt->execute([$userId, "%{$feature}%"]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (($result['cnt'] ?? 0) >= $maxPerHour) {
+        http_response_code(429);
+        echo json_encode(["success" => false, "reply" => "You have reached the AI usage limit ({$maxPerHour} requests/hour). Please try again later."]);
+        exit();
     }
 }
