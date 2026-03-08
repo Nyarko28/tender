@@ -9,8 +9,11 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 ini_set('log_errors', '1');
 
+// Set base directory to /app for Railway
+$baseDir = '/app';
+
 // Include CORS - check if file exists first
-$corsFile = __DIR__ . '/config/cors.php';
+$corsFile = $baseDir . '/config/cors.php';
 if (file_exists($corsFile)) {
     require_once $corsFile;
 } else {
@@ -47,68 +50,68 @@ if (strpos($uri, '/api/') === 0) {
     $apiPath = substr($uri, 5); // Remove '/api/' prefix
     
     // Base directory for API files
-    $baseDir = __DIR__ . '/api/';
+    $apiDir = $baseDir . '/api/';
     
-    // Try direct .php file: /api/tenders/public -> /app/api/tenders/public.php
-    $filePath = $baseDir . $apiPath . '.php';
-    
-    if (file_exists($filePath) && is_file($filePath)) {
-        try {
-            require $filePath;
-            exit;
-        } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error' => 'Error loading API endpoint',
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            exit;
+    // Check if path already ends with .php - don't append again
+    if (strpos($apiPath, '.php') !== false) {
+        // Path already has .php extension
+        $filePath = $apiDir . $apiPath;
+        
+        if (file_exists($filePath) && is_file($filePath)) {
+            try {
+                require $filePath;
+                exit;
+            } catch (Throwable $e) {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Error loading API endpoint',
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                exit;
+            }
         }
-    }
-    
-    // Try index.php in directory: /api/tenders -> /app/api/tenders/index.php
-    $indexPath = $baseDir . rtrim($apiPath, '/') . '/index.php';
-    
-    if (file_exists($indexPath) && is_file($indexPath)) {
-        try {
-            require $indexPath;
-            exit;
-        } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error' => 'Error loading API endpoint',
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            exit;
+    } else {
+        // Try direct .php file: /api/tenders/public -> /app/api/tenders/public.php
+        $filePath = $apiDir . $apiPath . '.php';
+        
+        if (file_exists($filePath) && is_file($filePath)) {
+            try {
+                require $filePath;
+                exit;
+            } catch (Throwable $e) {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Error loading API endpoint',
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                exit;
+            }
         }
-    }
-    
-    // Handle nested paths like /api/contracts/documents/upload
-    // Try: /app/api/contracts/documents/upload.php
-    $nestedPath = $baseDir . $apiPath . '.php';
-    if (file_exists($nestedPath) && is_file($nestedPath)) {
-        try {
-            require $nestedPath;
-            exit;
-        } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error' => 'Error loading API endpoint',
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            exit;
+        
+        // Try index.php in directory: /api/tenders -> /app/api/tenders/index.php
+        $indexPath = $apiDir . rtrim($apiPath, '/') . '/index.php';
+        
+        if (file_exists($indexPath) && is_file($indexPath)) {
+            try {
+                require $indexPath;
+                exit;
+            } catch (Throwable $e) {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Error loading API endpoint',
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                exit;
+            }
         }
     }
     
@@ -118,11 +121,7 @@ if (strpos($uri, '/api/') === 0) {
         'success' => false,
         'message' => 'Endpoint not found',
         'requested_path' => $uri,
-        'checked_paths' => [
-            $filePath,
-            $indexPath,
-            $nestedPath
-        ]
+        'checked_path' => $filePath ?? $apiDir . $apiPath
     ]);
     exit;
 }
