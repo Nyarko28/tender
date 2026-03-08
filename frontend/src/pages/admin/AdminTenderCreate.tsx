@@ -6,13 +6,14 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { tendersService } from '@/services/tenders';
 import { getCategories } from '@/services/categories';
+import { aiService, type AITenderDraft } from '@/services/ai';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TagChip } from '@/components/tenders/TagChip';
 import { toastSuccess, toastError } from '@/hooks/useToast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, AlertTriangle, X } from 'lucide-react';
 
 const schema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -35,6 +36,12 @@ export function AdminTenderCreate() {
 
   const [tags, setTags] = useState<string[]>([]);
   const tagInputRef = useRef<HTMLInputElement>(null);
+  
+  // AI Generate Modal State
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiKeywords, setAiKeywords] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [charCount, setCharCount] = useState(0);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -74,6 +81,37 @@ export function AdminTenderCreate() {
     setCriteria((prev) => [...prev, { name: '', description: '', max_score: 100, weight: 1 }]);
   };
 
+  // AI Generate function
+  const generateWithAI = async () => {
+    if (aiKeywords.length < 5) return;
+    setIsGenerating(true);
+    try {
+      const category = categories.find(c => c.id === categoryId)?.name || 'General';
+      const budget = watch('budget') ? `GHS ${watch('budget')}` : 'Not specified';
+      
+      const draft: AITenderDraft = await aiService.generateTender({
+        keywords: aiKeywords,
+        category,
+        budget,
+        duration: '12 months',
+      });
+      
+      // Apply AI-generated content to form
+      setValue('title', draft.title);
+      setValue('description', draft.description);
+      if (draft.tags?.length) setTags(draft.tags);
+      if (draft.criteria?.length) setCriteria(draft.criteria);
+      
+      setShowAIModal(false);
+      setAiKeywords('');
+      toastSuccess('✨ ProcureAI draft ready! Review and edit before publishing.');
+    } catch (e) {
+      toastError(e instanceof Error ? e.message : 'ProcureAI is unavailable. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div>
         <Link to="/admin/tenders" className="mb-4 inline-flex items-center text-sm text-primary hover:underline">
@@ -96,7 +134,18 @@ export function AdminTenderCreate() {
                 {errors.reference_number && <p className="text-sm text-red-600">{errors.reference_number.message}</p>}
               </div>
               <div>
-                <Label>Description</Label>
+                <div className="flex items-center justify-between mb-1">
+                  <Label>Description</Label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAIModal(true)}
+                    className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 
+                               bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors"
+                  >
+                    <Sparkles size={14} />
+                    Generate with ProcureAI
+                  </button>
+                </div>
                 <textarea {...register('description')} rows={4} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
                 {errors.description && <p className="text-sm text-red-600">{errors.description.message}</p>}
               </div>
@@ -175,6 +224,75 @@ export function AdminTenderCreate() {
             </form>
           </CardContent>
         </Card>
+
+        {/* AI Generate Modal */}
+        {showAIModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Sparkles className="text-blue-600" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800">Generate with ProcureAI</h3>
+                    <p className="text-xs text-slate-500">Powered by AI • Review before publishing</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowAIModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Input */}
+              <label className="text-sm font-medium text-slate-700 block mb-1">
+                Describe what you need in plain words
+              </label>
+              <textarea
+                value={aiKeywords}
+                onChange={(e) => { setAiKeywords(e.target.value); setCharCount(e.target.value.length); }}
+                placeholder='e.g. "supply and installation of 50 laptops and network equipment for 3 regional offices, including 1 year warranty and staff training"'
+                rows={4}
+                maxLength={300}
+                className="w-full border border-slate-200 rounded-xl p-3 text-sm resize-none 
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="text-right text-xs text-slate-400 mt-1">{charCount} / 300</div>
+
+              {/* Warning */}
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 
+                              rounded-lg p-3 mt-3 text-xs text-amber-700">
+                <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                ProcureAI generates a draft. Always review and edit before publishing.
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAIModal(false)}
+                  className="flex-1 border border-slate-200 text-slate-600 rounded-xl py-2 text-sm hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={generateWithAI}
+                  disabled={aiKeywords.length < 5 || isGenerating}
+                  className="flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-medium
+                             hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isGenerating ? (
+                    <><Loader2 size={14} className="animate-spin" /> Generating...</>
+                  ) : (
+                    <><Sparkles size={14} /> Generate Now</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

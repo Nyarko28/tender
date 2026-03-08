@@ -29,6 +29,7 @@ import { AdminCategories } from '@/pages/admin/AdminCategories';
 import { AdminContracts } from '@/pages/admin/AdminContracts';
 import { AdminContractCreate } from '@/pages/admin/AdminContractCreate';
 import { AdminContractDetail } from '@/pages/admin/AdminContractDetail';
+import { ProcureAI } from '@/pages/intelligence/ProcureAI';
 
 import { EvaluatorDashboard } from '@/pages/evaluator/EvaluatorDashboard';
 import { EvaluatorTenders } from '@/pages/evaluator/EvaluatorTenders';
@@ -78,6 +79,7 @@ function App() {
               <Route path="contracts" element={<AdminContracts />} />
               <Route path="contracts/create" element={<AdminContractCreate />} />
               <Route path="contracts/:id" element={<AdminContractDetail />} />
+              <Route path="intelligence" element={<ProcureAI />} />
             </Route>
 
             <Route
@@ -130,6 +132,7 @@ function App() {
               <Route path="contracts/:id" element={<SupplierContractDetail />} />
               <Route path="performance" element={<SupplierPerformance />} />
               <Route path="profile" element={<SupplierProfile />} />
+              <Route path="intelligence" element={<ProcureAI />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
