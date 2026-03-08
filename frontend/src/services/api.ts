@@ -44,13 +44,17 @@ api.interceptors.response.use(
 
     // Handle authentication errors
     if (status === 401 || status === 403) {
-      // Clear auth data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Clear auth data only if not already cleared
+      const token = localStorage.getItem('token');
+      if (token) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
 
-      // Redirect to login (don't retry)
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        // Redirect to login only if we're not already there
+        const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/';
+        if (!isLoginPage) {
+          window.location.href = '/login';
+        }
       }
 
       // Don't retry 401/403 requests

@@ -81,15 +81,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Clear localStorage FIRST to prevent any race conditions
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Immediately set state to logged out (before API call)
+    setState({ user: null, loading: false });
+    
     try {
       await authService.logout();
     } catch {
       // Continue with logout even if API call fails
-    } finally {
-      // Clear localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setState({ user: null, loading: false });
     }
   }, []);
 
