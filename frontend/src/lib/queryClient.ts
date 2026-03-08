@@ -10,15 +10,32 @@ export const queryClient = new QueryClient({
 
       // Cache settings
       staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-      gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache (formerly cacheTime)
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
 
-      // Error handling
-      retry: 1,
+      // Error handling - don't retry authentication errors
+      retry: (failureCount, error: unknown) => {
+        const err = error as { response?: { status?: number } };
+        const status = err?.response?.status;
+
+        // Never retry auth errors
+        if (status === 401 || status === 403) {
+          return false;
+        }
+
+        // Retry other errors once
+        return failureCount < 1;
+      },
       retryDelay: 1000,
     },
     mutations: {
-      // Will be configured per mutation
-      retry: 1,
+      // Don't retry auth errors in mutations either
+      retry: (failureCount, error: unknown) => {
+        const err = error as { response?: { status?: number } };
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          return false;
+        }
+        return failureCount < 1;
+      },
     },
   },
 });

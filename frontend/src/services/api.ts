@@ -24,10 +24,41 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// REQUEST INTERCEPTOR: Attach token to every request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// RESPONSE INTERCEPTOR: Handle 401 errors
 api.interceptors.response.use(
-  (res) => res,
-  (err: AxiosError<{ message?: string }>) => {
-    const message = err.response?.data?.message ?? err.message ?? 'Request failed';
+  (response) => response,
+  async (error: AxiosError<{ message?: string }>) => {
+    const status = error.response?.status;
+
+    // Handle authentication errors
+    if (status === 401 || status === 403) {
+      // Clear auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Redirect to login (don't retry)
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+
+      // Don't retry 401/403 requests
+      return Promise.reject(error);
+    }
+
+    // Handle other errors normally
+    const message = error.response?.data?.message ?? error.message ?? 'Request failed';
     return Promise.reject(new Error(message));
   }
 );

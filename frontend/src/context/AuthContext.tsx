@@ -24,12 +24,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = await authService.me();
       setState({ user, loading: false });
     } catch {
+      // If me() fails (including 401), clear auth state
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setState({ user: null, loading: false });
     }
   }, []);
 
+  // Initialize: Check for existing token on mount
   useEffect(() => {
-    refreshUser();
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+
+    if (token && savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setState({ user, loading: false });
+        // Also verify token is still valid by calling /auth/me
+        refreshUser();
+      } catch (e) {
+        localStorage.clear();
+        setState({ user: null, loading: false });
+      }
+    } else {
+      setState({ user: null, loading: false });
+    }
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -44,7 +63,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Login failed: malformed server response.');
     }
 
-    const user = res.data.user;
+    const { user, token } = res.data;
+
+    // Store token and user in localStorage
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+    localStorage.setItem('user', JSON.stringify(user));
+
     setState({ user, loading: false });
     return user;
   }, []);
@@ -55,8 +81,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await authService.logout();
-    setState({ user: null, loading: false });
+    try {
+      await authService.logout();
+    } catch {
+      // Continue with logout even if API call fails
+    } finally {
+      // Clear localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setState({ user: null, loading: false });
+    }
   }, []);
 
   const value: AuthContextValue = {
