@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { notificationsService } from '@/services/notifications';
 import type { Notification } from '@/types';
 import { cn } from '@/utils/cn';
+import FloatingProcureAI from '@/components/ai/FloatingProcureAI';
 
 const SIDEBAR_WIDTH = 260;
 
@@ -376,6 +377,7 @@ export function SupplierLayout() {
           onClick={() => setNotificationDropdownOpen(false)}
         />
       )}
+      <FloatingProcureAI />
     </div>
   );
 }

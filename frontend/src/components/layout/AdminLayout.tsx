@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
+import FloatingProcureAI from '@/components/ai/FloatingProcureAI';
 import { cn } from '@/utils/cn';
 
 const SIDEBAR_WIDTH = 260;
@@ -218,6 +219,7 @@ export function AdminLayout() {
           <Outlet />
         </main>
       </div>
+      <FloatingProcureAI />
     </div>
   );
 }
