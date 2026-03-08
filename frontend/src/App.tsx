@@ -44,6 +44,7 @@ import { SupplierProfile } from '@/pages/supplier/SupplierProfile';
 import { SupplierContracts } from '@/pages/supplier/SupplierContracts';
 import { SupplierContractDetail } from '@/pages/supplier/SupplierContractDetail';
 import { SupplierPerformance } from '@/pages/supplier/SupplierPerformance';
+import { SupplierNotifications } from '@/pages/supplier/SupplierNotifications';
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ function App() {
               <Route path="contracts/:id" element={<SupplierContractDetail />} />
               <Route path="performance" element={<SupplierPerformance />} />
               <Route path="profile" element={<SupplierProfile />} />
+              <Route path="notifications" element={<SupplierNotifications />} />
               <Route path="intelligence" element={<ProcureAI />} />
             </Route>
 
