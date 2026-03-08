@@ -4,16 +4,8 @@
  * Handles /api/* routing to .php files in /app/api/
  */
 
-// Add CORS headers for all requests
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-// Handle OPTIONS preflight
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+// Load CORS configuration first (handles all CORS headers)
+require_once __DIR__ . '/config/cors.php';
 
 // Set JSON content type for API responses
 header('Content-Type: application/json');
