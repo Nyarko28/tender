@@ -109,14 +109,13 @@ export function getTenderImage(tender: { id?: number; title?: string | null; cat
  */
 export function getFallbackImage(tender: { id?: number; title?: string | null; category_name?: string | null } | undefined): string {
   if (!tender) return '';
-  
-  const category = tender.category_name || 'business';
-  const title = tender.title || '';
-  
-  // Use different photo ID for fallback based on tender id
-  const photoId = 1600 + ((tender.id ?? 0) % 400);
-  
-  return `https://images.unsplash.com/photo-${photoId}?auto=format&fit=crop&q=60&w=800&sig=${tender.id ?? 0}&query=${encodeURIComponent(category)},${encodeURIComponent(title)}`;
+  const title = tender.title || 'Tender';
+  const colors = ['1e40af', '7c3aed', '0f766e', 'b45309', '334155', '0ea5e9'];
+  const idx = (tender.id ?? 0) % colors.length;
+  const bg = colors[idx];
+  const text = encodeURIComponent(title.slice(0, 32));
+  // Solid, reliable placeholder that never 404s
+  return `https://placehold.co/800x400/${bg}/ffffff?text=${text}`;
 }
 
 export const categoryAssets: Record<string, { image: string; color: string }> = {
