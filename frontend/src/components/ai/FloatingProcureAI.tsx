@@ -37,16 +37,18 @@ export default function FloatingProcureAI() {
   const tenderIdMatch = location.pathname.match(/\/(?:admin|supplier|evaluator)\/tenders\/(\d+)/);
   const tenderId = tenderIdMatch ? parseInt(tenderIdMatch[1]) : null;
 
-  // Hide on the full intelligence page
-  if (location.pathname.includes('/intelligence')) return null;
+  // Hide on the full intelligence page (but keep hook order consistent)
+  const isIntelligencePage = location.pathname.includes('/intelligence');
 
   // Scroll to bottom when new message arrives
   useEffect(() => {
+    if (isIntelligencePage) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   // Focus input when popup opens
   useEffect(() => {
+    if (isIntelligencePage) return;
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 100);
   }, [isOpen]);
 
@@ -178,6 +180,8 @@ export default function FloatingProcureAI() {
     : user?.role === 'evaluator'
     ? '/evaluator/intelligence'
     : '/supplier/intelligence';
+
+  if (isIntelligencePage) return null;
 
   return (
     <>
