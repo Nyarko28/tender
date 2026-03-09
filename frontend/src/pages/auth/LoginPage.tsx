@@ -1,81 +1,53 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useAuth } from '@/context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toastError } from '@/hooks/useToast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-const schema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type FormData = z.infer<typeof schema>;
-
-function getDashboardPath(role: string): string {
-  switch (role) {
-    case 'admin':
-      return '/admin/dashboard';
-    case 'evaluator':
-      return '/evaluator/dashboard';
-    case 'supplier':
-      return '/supplier/dashboard';
-    default:
-      return '/';
-  }
-}
-
 export function LoginPage() {
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { email: '', password: '' },
-  });
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!email.trim()) { toastError('Email is required'); return; }
+    if (!password) { toastError('Password is required'); return; }
 
-  const onSubmit = async (data: FormData) => {
-    setLoading(true);
     try {
-      const user = await login(data.email, data.password);
-      navigate(from ?? getDashboardPath(user.role), { replace: true });
-    } catch (e: any) {
-      // Check for specific account status error codes
-      const errorCode = e?.response?.data?.error_code;
-      const details = e?.response?.data?.details;
-      
-      if (errorCode === 'ACCOUNT_SUSPENDED' || errorCode === 'ACCOUNT_BLACKLISTED' || errorCode === 'ACCOUNT_PENDING') {
-        // Store details in sessionStorage for the account status page
-        sessionStorage.setItem('account_status', JSON.stringify({
-          ...details,
-          email: data.email
-        }));
+      setIsLoading(true);
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      console.log('Login response:', data);
+
+      if (data.success && data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         
-        // Redirect to appropriate page based on error code
-        const routeMap: Record<string, string> = {
-          'ACCOUNT_SUSPENDED': '/account-suspended',
-          'ACCOUNT_BLACKLISTED': '/account-blacklisted',
-          'ACCOUNT_PENDING': '/account-pending'
-        };
-        navigate(routeMap[errorCode] || '/account-suspended');
-        return;
+        // Redirect based on role
+        const role = data.user?.role;
+        if (role === 'admin') navigate('/admin/dashboard');
+        else if (role === 'supplier') navigate('/supplier/dashboard');
+        else navigate('/dashboard');
+      } else {
+        toastError(data.message ?? 'Invalid email or password');
       }
-      
-      toastError(e instanceof Error ? e.message : 'Login failed');
+
+    } catch (err) {
+      console.error('Login error:', err);
+      toastError('Connection error. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -90,7 +62,7 @@ export function LoginPage() {
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <Label htmlFor="email">
                 Email <span aria-hidden="true" className="text-red-500">*</span>
@@ -100,14 +72,10 @@ export function LoginPage() {
                 type="email"
                 autoComplete="email"
                 aria-required="true"
-                aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-                {...register('email')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1"
               />
-              {errors.email && (
-                <p id="email-error" role="alert" className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
             </div>
             <div>
               <Label htmlFor="password">
@@ -118,21 +86,17 @@ export function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 aria-required="true"
-                aria-invalid={!!errors.password}
-                aria-describedby={errors.password ? 'password-error' : undefined}
-                {...register('password')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="mt-1"
               />
-              {errors.password && (
-                <p id="password-error" role="alert" className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{' '}
+            Don't have an account?{' '}
             <Link to="/register" className="font-medium text-primary hover:underline">
               Register as supplier
             </Link>
