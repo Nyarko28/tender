@@ -21,7 +21,11 @@ export function LoginPage() {
     try {
       setIsLoading(true);
 
-      const res = await fetch('/api/auth/login', {
+      const base =
+        (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ||
+        '/api';
+
+      const res = await fetch(`${base}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
