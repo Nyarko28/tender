@@ -1,18 +1,52 @@
 <?php
 
 function buildSpecificSearchQuery($title, $description = '', $category = '') {
-    $stopWords = ['for', 'the', 'and', 'of', 'in', 'a', 'an', 'to', 'supply',
-                  'provision', 'procurement', 'services', 'tender', 'request',
-                  'proposal', 'rfp', 'rfq', 'delivery', 'provision', 'works'];
+    // Step 1: Smart keyword extraction.
+    // Strip common procurement lead-in phrases from the title, then choose 2–3 meaningful words.
+    $titleText = strtolower((string)$title);
+    $titleText = preg_replace('/\s+/', ' ', trim($titleText));
 
-    $text = strtolower($title . ' ' . substr($description ?? '', 0, 150));
-    $words = array_filter(
-        explode(' ', preg_replace('/[^a-z0-9 ]/', '', $text)),
-        fn($w) => strlen($w) > 3 && !in_array($w, $stopWords)
-    );
+    $leadPhrases = [
+        'supply of', 'provision of', 'procurement of', 'tender for', 'contract for', 'request for',
+        'purchase of', 'delivery of', 'installation of', 'maintenance of', 'rehabilitation of',
+        'construction of', 'consultancy for', 'services for', 'works for'
+    ];
+    foreach ($leadPhrases as $p) {
+        $titleText = preg_replace('/^' . preg_quote($p, '/') . '\s+/i', '', $titleText);
+    }
 
-    $keywords = array_slice(array_values($words), 0, 3);
-    return implode(' ', $keywords) ?: $title;
+    $stopWords = [
+        'for', 'the', 'and', 'of', 'in', 'a', 'an', 'to', 'on', 'by', 'with', 'from', 'into',
+        'supply', 'provision', 'procurement', 'service', 'services', 'tender', 'request',
+        'proposal', 'rfp', 'rfq', 'delivery', 'works', 'work', 'contract', 'project',
+        'including', 'installation', 'maintain', 'maintenance', 'provide', 'provided'
+    ];
+
+    $text = $titleText . ' ' . strtolower(substr((string)($description ?? ''), 0, 200));
+    $text = preg_replace('/[^a-z0-9 ]/', ' ', $text);
+    $tokens = preg_split('/\s+/', trim($text)) ?: [];
+
+    $freq = [];
+    foreach ($tokens as $w) {
+        if ($w === '' || strlen($w) < 3) continue;
+        if (in_array($w, $stopWords, true)) continue;
+        if (preg_match('/^\d+$/', $w)) continue; // skip pure numbers
+        $freq[$w] = ($freq[$w] ?? 0) + 1;
+    }
+
+    if (empty($freq)) {
+        return trim((string)$title) ?: 'tender';
+    }
+
+    // Sort by frequency desc, then word length desc.
+    uksort($freq, function ($a, $b) use ($freq) {
+        $fa = $freq[$a]; $fb = $freq[$b];
+        if ($fa === $fb) return strlen($b) <=> strlen($a);
+        return $fb <=> $fa;
+    });
+
+    $keywords = array_slice(array_keys($freq), 0, 3);
+    return implode(' ', $keywords);
 }
 
 function generateSeed($tenderId, $title) {
@@ -46,8 +80,10 @@ function fetchFromPexels($query, $seed) {
     if (empty($photos)) return null;
 
     $picked = $photos[$seed % count($photos)];
+    $remoteUrl = $picked['src']['large'] ?? $picked['src']['medium'];
     return [
-        'url' => $picked['src']['large'] ?? $picked['src']['medium'],
+        'url' => $remoteUrl,
+        'remote_url' => $remoteUrl,
         'thumb' => $picked['src']['medium'],
         'alt' => $picked['alt'] ?? $query,
         'credit' => $picked['photographer'] ?? 'Pexels',
@@ -90,10 +126,13 @@ function fetchFromPixabay($query, $seed) {
     // Download image to server (Pixabay requires this for permanent use)
     $picked = $hits[$seed % count($hits)];
     $imageUrl = $picked['largeImageURL'] ?? $picked['webformatURL'];
-    $savedUrl = downloadAndSaveImage($imageUrl, 'pixabay_' . $picked['id']);
+    $savedPath = downloadAndSaveImage($imageUrl, 'pixabay_' . $picked['id']);
 
     return [
-        'url' => $savedUrl ?? $imageUrl,
+        // url will be served via /api/tenders/image?id=...; keep origin URL for audit/debug
+        'url' => $imageUrl,
+        'remote_url' => $imageUrl,
+        'local_path' => $savedPath,
         'thumb' => $picked['previewURL'],
         'alt' => $query,
         'credit' => $picked['user'] ?? 'Pixabay',
@@ -106,17 +145,17 @@ function fetchFromPixabay($query, $seed) {
 
 function downloadAndSaveImage($url, $filename) {
     // Save Pixabay images locally as required by their API terms
-    $uploadDir = '/app/public/uploads/tender-images/';
+    $backendRoot = dirname(__DIR__);
+    $uploadDir = $backendRoot . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tender-images';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
 
     $ext = 'jpg';
-    $filePath = $uploadDir . $filename . '.' . $ext;
-    $publicUrl = '/uploads/tender-images/' . $filename . '.' . $ext;
+    $filePath = $uploadDir . DIRECTORY_SEPARATOR . $filename . '.' . $ext;
 
     // Return existing if already downloaded
-    if (file_exists($filePath)) return $publicUrl;
+    if (file_exists($filePath)) return $filePath;
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -128,7 +167,7 @@ function downloadAndSaveImage($url, $filename) {
 
     if ($httpCode === 200 && $imageData) {
         file_put_contents($filePath, $imageData);
-        return $publicUrl;
+        return $filePath;
     }
 
     return null;
@@ -145,6 +184,7 @@ function fetchFromPollinations($title, $description, $seed) {
 
     return [
         'url' => $url,
+        'remote_url' => $url,
         'thumb' => $url,
         'alt' => $title,
         'credit' => 'Pollinations AI',
@@ -223,8 +263,10 @@ function getPlaceholderImage($tenderId, $title) {
     $colors = ['1e40af', '7c3aed', '065f46', 'b45309', '991b1b', '0e7490'];
     $color = $colors[$tenderId % count($colors)];
     $encoded = urlencode(substr($title, 0, 30));
+    $url = "https://placehold.co/800x400/{$color}/ffffff?text={$encoded}";
     return [
-        'url' => "https://placehold.co/800x400/{$color}/ffffff?text={$encoded}",
+        'url' => $url,
+        'remote_url' => $url,
         'thumb' => "https://placehold.co/400x200/{$color}/ffffff?text={$encoded}",
         'alt' => $title,
         'credit' => null,

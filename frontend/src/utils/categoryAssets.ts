@@ -87,16 +87,16 @@ export function extractCleanTitle(title: string | null | undefined): string | nu
 /**
  * Generates a dynamic Unsplash image URL based on tender title and category
  * @param tender - The tender object with id, title, and category_name
- * @returns A unique Unsplash image URL
+ * @returns A unique tender-specific image URL (served by backend)
  */
 export function getTenderImage(tender: { id?: number; title?: string | null; category_name?: string | null } | undefined): string {
   if (!tender) return '';
   try {
-    // Use category-based static images from categoryAssets
-    const category = tender.category_name || 'Other';
-    const asset = categoryAssets[category] || categoryAssets['Other'];
-    
-    return asset.image;
+    // Step 6: Replace static category images with tender-specific image endpoint.
+    // This endpoint is deterministic + cached permanently server-side.
+    if (!tender.id) return '';
+    // Use relative path so it works across environments (Vite proxy / prod domain)
+    return `/api/tenders/image?id=${tender.id}`;
   } catch {
     return getFallbackImage(tender);
   }
@@ -121,43 +121,43 @@ export function getFallbackImage(tender: { id?: number; title?: string | null; c
 
 export const categoryAssets: Record<string, { image: string; color: string }> = {
   'IT & Technology': {
-    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=70',
+    image: '',
     color: '#3b82f6',
   },
   Construction: {
-    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=70',
+    image: '',
     color: '#f59e0b',
   },
   'Health & Medical': {
-    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&q=70',
+    image: '',
     color: '#10b981',
   },
   'Office Supplies': {
-    image: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=400&q=70',
+    image: '',
     color: '#8b5cf6',
   },
   Consultancy: {
-    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=70',
+    image: '',
     color: '#ec4899',
   },
   'Transport & Logistics': {
-    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=70',
+    image: '',
     color: '#f97316',
   },
   'Food & Catering': {
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=70',
+    image: '',
     color: '#14b8a6',
   },
   'Security Services': {
-    image: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&q=70',
+    image: '',
     color: '#6b7280',
   },
   'Cleaning Services': {
-    image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=70',
+    image: '',
     color: '#84cc16',
   },
   Other: {
-    image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&q=70',
+    image: '',
     color: '#94a3b8',
   },
 };

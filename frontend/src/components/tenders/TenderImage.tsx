@@ -21,12 +21,7 @@ export default function TenderImage({ tenderId, title, className = '' }: TenderI
   const [image, setImage] = useState<ImageData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Guard against missing tenderId or title
-  if (!tenderId || !title) {
-    return (
-      <div className={`bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg ${className}`} />
-    );
-  }
+  const hasRequired = !!tenderId && !!title;
 
   const displayTitle = title || 'Tender';
 
@@ -45,16 +40,24 @@ export default function TenderImage({ tenderId, title, className = '' }: TenderI
       return;
     }
 
-    api.get(`/tenders/image?id=${tenderId}`)
+    api.get(`/tenders/image?id=${tenderId}&meta=1`)
       .then((res) => {
-        if (res.data.success && res.data.image) {
-          sessionStorage.setItem(cacheKey, JSON.stringify(res.data.image));
-          setImage(res.data.image);
+        const img = res.data?.data?.image ?? res.data?.image;
+        if (res.data.success && img) {
+          sessionStorage.setItem(cacheKey, JSON.stringify(img));
+          setImage(img);
         }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [tenderId]);
+
+  // Guard against missing tenderId or title
+  if (!hasRequired) {
+    return (
+      <div className={`bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg ${className}`} />
+    );
+  }
 
   if (loading) {
     return (
