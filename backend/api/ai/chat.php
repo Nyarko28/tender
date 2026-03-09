@@ -4,7 +4,6 @@
  */
 
 require_once __DIR__ . '/../bootstrap.php';
-require_once dirname(__DIR__) . '/config/auth-middleware.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { 
     http_response_code(200); 
