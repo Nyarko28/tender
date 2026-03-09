@@ -36,12 +36,15 @@ export function LoginPage() {
       }
       console.log('Login response:', data);
 
-      if (res.ok && data.success && data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+      if (res.ok && data.success && data.data && data.data.user) {
+        const { user, token } = data.data;
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        localStorage.setItem('user', JSON.stringify(user));
         
         // Redirect based on role
-        const role = data.user?.role;
+        const role = user?.role;
         if (role === 'admin') navigate('/admin/dashboard');
         else if (role === 'supplier') navigate('/supplier/dashboard');
         else navigate('/dashboard');
