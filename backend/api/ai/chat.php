@@ -26,7 +26,15 @@ if (empty($message)) {
     jsonResponse(['success' => false, 'message' => 'Message is required'], 400); exit();
 }
 
-try { $db = Database::getInstance(); } catch (Exception $e) { $db = null; }
+try { 
+    $db = Database::getInstance(); 
+    if (!is_object($db)) {
+        $db = null;
+    }
+} catch (Exception $e) { 
+    error_log('DB error: ' . $e->getMessage());
+    $db = null; 
+}
 
 $userId = (int)$user['id'];
 checkAIRateLimit($userId, $db);

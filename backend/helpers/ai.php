@@ -1,7 +1,7 @@
 <?php
 
 function getAdminContext($db) {
-    if (!$db) return [];
+    if (!$db || !is_object($db)) return [];
     try {
         return [
             'total_tenders' => $db->queryOne("SELECT COUNT(*) as c FROM tenders")['c'] ?? 0,
@@ -23,7 +23,7 @@ function getAdminContext($db) {
 }
 
 function getSupplierContext($userId, $db) {
-    if (!$db) return [];
+    if (!$db || !is_object($db)) return [];
     try {
         return [
             'profile' => $db->queryOne("SELECT company_name, industry, verified FROM supplier_profiles WHERE user_id = ?", [$userId]) ?? [],
@@ -41,7 +41,7 @@ function getSupplierContext($userId, $db) {
 }
 
 function getOfficerContext($db) {
-    if (!$db) return [];
+    if (!$db || !is_object($db)) return [];
     try {
         return [
             'pending_evaluations' => $db->query("SELECT t.id, t.title, COUNT(b.id) as bid_count FROM tenders t JOIN bids b ON b.tender_id = t.id WHERE t.status = 'published' GROUP BY t.id ORDER BY t.submission_deadline ASC LIMIT 5") ?? [],
@@ -55,7 +55,7 @@ function getOfficerContext($db) {
 }
 
 function getTenderContext($tenderId, $db) {
-    if (!$db || !$tenderId) return [];
+    if (!$db || !is_object($db) || !$tenderId) return [];
     try {
         return [
             'tender' => $db->queryOne("SELECT * FROM tenders WHERE id = ?", [$tenderId]) ?? [],
@@ -178,7 +178,7 @@ STRICT RULES:
 }
 
 function checkAIRateLimit($userId, $db) {
-    if (!$db) return;
+    if (!$db || !is_object($db)) return;
     try {
         $limit = 50;
         $count = $db->queryOne(
@@ -194,7 +194,7 @@ function checkAIRateLimit($userId, $db) {
 }
 
 function logAIChat($userId, $message, $reply, $db) {
-    if (!$db) return;
+    if (!$db || !is_object($db)) return;
     try {
         $db->execute(
             "INSERT INTO ai_chat_logs (user_id, message, reply, created_at) VALUES (?, ?, ?, NOW())",
