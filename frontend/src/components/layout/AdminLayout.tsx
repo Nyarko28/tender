@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -18,6 +18,7 @@ import {
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
 import FloatingProcureAI from '@/components/ai/FloatingProcureAI';
 import { cn } from '@/utils/cn';
+import api from '@/services/api';
 
 const SIDEBAR_WIDTH = 260;
 
@@ -72,10 +73,12 @@ function NavSection({
   title,
   items,
   pathname,
+  pendingSuppliers,
 }: {
   title: string;
   items: { to: string; label: string; icon: React.ElementType }[];
   pathname: string;
+  pendingSuppliers?: number;
 }) {
   return (
     <>
@@ -96,7 +99,12 @@ function NavSection({
             )}
           >
             <Icon className="mr-3 h-[18px] w-[18px] shrink-0" />
-            {label}
+            <span className="flex-1 truncate">{label}</span>
+            {label === 'Suppliers' && pendingSuppliers && pendingSuppliers > 0 && (
+              <span className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white">
+                {pendingSuppliers > 9 ? '9+' : pendingSuppliers}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -109,6 +117,7 @@ export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingSuppliers, setPendingSuppliers] = useState<number>(0);
   const pathname = location.pathname;
   const pageTitle = getPageTitle(pathname);
 
@@ -118,6 +127,24 @@ export function AdminLayout() {
     .join('')
     .toUpperCase()
     .slice(0, 2) ?? 'AD';
+
+  // Fetch pending supplier approvals count for sidebar badge
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ success: boolean; data: { pending: number } }>('/suppliers/pending-count')
+      .then((res) => {
+        if (!cancelled && res.data.success && typeof res.data.data?.pending === 'number') {
+          setPendingSuppliers(res.data.data.pending);
+        }
+      })
+      .catch(() => {
+        // Fail silently; badge is non-critical
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -159,7 +186,7 @@ export function AdminLayout() {
             className="flex-1 overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#475569 #0f172a' }}
           >
-            <NavSection title="Main Menu" items={mainNav} pathname={pathname} />
+            <NavSection title="Main Menu" items={mainNav} pathname={pathname} pendingSuppliers={pendingSuppliers} />
             <NavSection title="Reports" items={reportsNav} pathname={pathname} />
             <NavSection title="Settings" items={settingsNav} pathname={pathname} />
           </nav>
