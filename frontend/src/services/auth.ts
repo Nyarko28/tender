@@ -16,6 +16,7 @@ export interface RegisterInput {
   phone?: string;
   website?: string;
   category?: string;
+  categories?: string[];
   tax_id?: string;
 }
 

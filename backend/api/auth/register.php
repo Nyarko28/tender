@@ -48,9 +48,30 @@ $phone = sanitizeString($body['phone'] ?? null, 50);
 $website = sanitizeString($body['website'] ?? null, 255);
 $category = sanitizeString($body['category'] ?? null, 100);
 $taxId = sanitizeString($body['tax_id'] ?? null, 100);
+$categories = $body['categories'] ?? [];
 
 $stmt = $pdo->prepare("INSERT INTO supplier_profiles (user_id, company_name, registration_number, address, phone, website, category, tax_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->execute([$userId, $companyName, $regNo, $address, $phone, $website, $category, $taxId]);
+
+// Save multiple categories if provided
+if (!empty($categories) && is_array($categories)) {
+    foreach ($categories as $categoryName) {
+        $categoryName = sanitizeString($categoryName, 100);
+        if (empty($categoryName)) continue;
+        
+        // Find category by name
+        $catStmt = $pdo->prepare("SELECT id FROM tender_categories WHERE name = ?");
+        $catStmt->execute([$categoryName]);
+        $categoryRow = $catStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($categoryRow) {
+            $insertCatStmt = $pdo->prepare(
+                "INSERT IGNORE INTO supplier_categories (supplier_id, category_id, created_at) VALUES (?, ?, NOW())"
+            );
+            $insertCatStmt->execute([$userId, $categoryRow['id']]);
+        }
+    }
+}
 
 auditLog($pdo, null, 'supplier_registered', 'users', $userId, "Email: $email");
 notifyAdmin('New supplier registration', "A new supplier has registered: $name ($email). Please review and approve in the admin panel.");

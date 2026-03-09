@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,8 +7,11 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CategoryMultiSelect } from '@/components/ui/CategoryMultiSelect';
 import { toastSuccess, toastError } from '@/hooks/useToast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getCategories } from '@/services/categories';
+import type { TenderCategory } from '@/types';
 
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -20,6 +23,7 @@ const schema = z.object({
     phone: z.string().optional(),
     website: z.string().optional(),
     category: z.string().optional(),
+    categories: z.array(z.string()).min(1, 'Select at least one category'),
     tax_id: z.string().optional(),
 });
 
@@ -27,8 +31,14 @@ type FormData = z.infer<typeof schema>;
 
 export function RegisterPage() {
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<TenderCategory[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getCategories().then(setCategories).catch(console.error);
+  }, []);
 
   const {
     register,
@@ -45,9 +55,13 @@ export function RegisterPage() {
   });
 
   const onSubmit = async (data: FormData) => {
+    if (selectedCategories.length === 0) {
+      toastError('Please select at least one category');
+      return;
+    }
     setLoading(true);
     try {
-      await registerUser(data);
+      await registerUser({ ...data, categories: selectedCategories });
       toastSuccess('Registration successful. Your account is pending approval.');
       navigate('/login');
     } catch (e) {
@@ -159,8 +173,18 @@ export function RegisterPage() {
                     <Input id="website" type="url" {...register('website')} className="mt-1" placeholder="https://" />
                   </div>
                   <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Input id="category" {...register('category')} className="mt-1" placeholder="e.g. Office supplies" />
+                    <Label htmlFor="category">
+                      Category <span className="text-gray-400 font-normal">(select all that apply)</span>
+                    </Label>
+                    <CategoryMultiSelect
+                      categories={categories}
+                      selected={selectedCategories}
+                      onChange={setSelectedCategories}
+                      placeholder="e.g. IT & Technology, Construction..."
+                    />
+                    {selectedCategories.length === 0 && (
+                      <p className="mt-1 text-xs text-gray-400">Select at least one category that describes your business</p>
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <Label htmlFor="tax_id">Tax ID</Label>
