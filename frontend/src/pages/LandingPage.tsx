@@ -17,7 +17,8 @@ import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTABanner } from '@/components/landing/CTABanner';
 import { Footer } from '@/components/landing/Footer';
 import { getCategoryAsset, getTenderImage, getFallbackImage } from '@/utils/categoryAssets';
-import { FileText, Clock } from 'lucide-react';
+import { ProcurEaseLogo } from '@/components/ui/ProcurEaseLogo';
+import { Clock } from 'lucide-react';
 
 function Navbar() {
   const { user } = useAuth();
@@ -34,10 +35,8 @@ function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-3 font-semibold text-primary">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
-            <FileText className="h-5 w-5" />
-          </span>
-          <span>Supplier Tender</span>
+          <ProcurEaseLogo size={36} />
+          <span>ProcurEase</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/#tenders" className="text-sm font-medium text-gray-600 hover:text-primary">

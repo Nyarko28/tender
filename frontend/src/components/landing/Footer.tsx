@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { FileText, Facebook, Twitter, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { ProcurEaseLogo } from '@/components/ui/ProcurEaseLogo';
+import { Facebook, Twitter, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 
 const socialLinks = [
   { icon: Facebook, href: '#', label: 'Facebook' },
@@ -31,10 +32,8 @@ export function Footer() {
           {/* Column 1 — Brand */}
           <div>
             <Link to="/" className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
-                <FileText className="h-5 w-5" />
-              </span>
-              <span className="font-semibold text-white">Supplier Tender</span>
+              <ProcurEaseLogo size={36} />
+              <span className="font-semibold text-white">ProcurEase</span>
             </Link>
             <p className="mt-3 text-sm text-[#94a3b8]">
               Transparent procurement for a better future.
@@ -123,7 +122,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 space-y-2 border-t border-[#334155] pt-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-[#64748b] text-sm">
-            <span>© {new Date().getFullYear()} Supplier Tender. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} ProcurEase. All rights reserved.</span>
             <span>
               <Link to="#" className="transition-colors hover:text-white">
                 Privacy Policy
