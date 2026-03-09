@@ -96,9 +96,13 @@ export function AdminTenderCreate() {
         duration: '12 months',
       });
       
+      if (!draft || !draft.title || !draft.description) {
+        throw new Error('ProcureAI returned an incomplete draft. Please try again.');
+      }
+
       // Apply AI-generated content to form
-      setValue('title', draft.title);
-      setValue('description', draft.description);
+      setValue('title', draft.title, { shouldDirty: true, shouldTouch: true });
+      setValue('description', draft.description, { shouldDirty: true, shouldTouch: true });
       if (draft.tags?.length) setTags(draft.tags);
       if (draft.criteria?.length) setCriteria(draft.criteria);
       

@@ -1,5 +1,43 @@
 import { api } from './api';
 
+type LegacyAIResponse<T> =
+  | { success: true; data: T }
+  | { success: true; reply: string }
+  | { success: true; reply: T }
+  | { success?: boolean; data?: T; reply?: unknown; message?: string };
+
+function parseMaybeJson<T>(value: unknown): T | null {
+  if (!value) return null;
+  if (typeof value === 'object') return value as T;
+  if (typeof value !== 'string') return null;
+
+  // Some legacy endpoints return JSON encoded twice (string containing JSON string)
+  const tryParse = (s: string): unknown => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  };
+
+  const once = tryParse(value);
+  if (once && typeof once === 'object') return once as T;
+  if (typeof once === 'string') {
+    const twice = tryParse(once);
+    if (twice && typeof twice === 'object') return twice as T;
+  }
+  return null;
+}
+
+function unwrapAIData<T>(resData: LegacyAIResponse<T>): T {
+  if (resData && typeof resData === 'object' && 'data' in resData && (resData as any).data) {
+    return (resData as any).data as T;
+  }
+  const parsed = parseMaybeJson<T>((resData as any)?.reply);
+  if (parsed) return parsed;
+  throw new Error((resData as any)?.message || 'Unexpected AI response format');
+}
+
 // Types for AI responses
 export interface AITenderDraft {
   title: string;
@@ -77,7 +115,7 @@ export const aiService = {
     duration: string;
   }): Promise<AITenderDraft> => {
     const response = await api.post('/ai/generate-tender', data);
-    return response.data.data;
+    return unwrapAIData<AITenderDraft>(response.data);
   },
 
   // Get AI evaluation suggestion for a bid
@@ -86,7 +124,7 @@ export const aiService = {
       bid_id: bidId,
       tender_id: tenderId,
     });
-    return response.data.data;
+    return unwrapAIData<AIBidEvaluation>(response.data);
   },
 
   // Compare all bids for a tender
@@ -94,7 +132,7 @@ export const aiService = {
     const response = await api.post('/ai/compare-bids', {
       tender_id: tenderId,
     });
-    return response.data.data;
+    return unwrapAIData<AIBidComparison>(response.data);
   },
 
   // Get supplier risk analysis
@@ -102,7 +140,7 @@ export const aiService = {
     const response = await api.post('/ai/supplier-risk', {
       supplier_id: supplierId,
     });
-    return response.data.data;
+    return unwrapAIData<AISupplierRisk>(response.data);
   },
 
   // Chat with ProcureAI
@@ -111,7 +149,7 @@ export const aiService = {
       message,
       history,
     });
-    return response.data.data;
+    return unwrapAIData<AIChatResponse>(response.data);
   },
 };
 
