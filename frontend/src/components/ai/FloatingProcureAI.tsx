@@ -49,12 +49,18 @@ export default function FloatingProcureAI() {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/ai/chat', {
-        message: text,
-        history: updatedMessages.slice(1, -1).slice(-6).map(m => ({
+      // Skip first message (initial greeting), take max last 6 messages
+      const historyToSend = messages
+        .slice(1) // Skip initial greeting
+        .slice(-6)
+        .map(m => ({
           role: m.role,
           content: m.content,
-        })),
+        }));
+      
+      const res = await api.post('/ai/chat', {
+        message: text,
+        history: historyToSend,
       });
 
       if (res.data.success) {

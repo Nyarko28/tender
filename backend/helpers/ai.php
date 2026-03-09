@@ -116,25 +116,35 @@ function callGeminiChat(string $domainPrompt, array $history, string $userMessag
             'parts' => [['text' => $systemPrompt . "\n\nUser: " . $userMessage]]
         ];
     } else {
-        // Add system prompt as context
-        $contents[] = [
-            'role' => 'user',
-            'parts' => [['text' => $systemPrompt]]
-        ];
-        
-        // Add history (max last 10 messages)
+        // Filter history - skip system and assistant messages, only keep user messages
         $recentHistory = array_slice($history, -10);
         foreach ($recentHistory as $msg) {
-            if (isset($msg['role']) && isset($msg['content'])) {
-                $role = $msg['role'] === 'assistant' ? 'model' : 'user';
-                $contents[] = [
-                    'role' => $role,
-                    'parts' => [['text' => $msg['content']]]
-                ];
-            }
+            $role = $msg['role'] ?? '';
+            $content = $msg['content'] ?? $msg['text'] ?? '';
+            
+            // Skip empty, system, or assistant messages
+            if (empty($content) || $role === 'system' || $role === 'assistant') continue;
+            
+            $contents[] = [
+                'role' => 'user',
+                'parts' => [['text' => $content]]
+            ];
         }
         
-        // Add current message
+        // Gemini REQUIRES conversation to start with 'user' role - remove any invalid leading messages
+        if (!empty($contents) && $contents[0]['role'] !== 'user') {
+            array_shift($contents);
+        }
+        
+        // If no valid user messages, add system prompt as first message
+        if (empty($contents)) {
+            $contents[] = [
+                'role' => 'user',
+                'parts' => [['text' => $systemPrompt]]
+            ];
+        }
+        
+        // Add current user message
         $contents[] = [
             'role' => 'user',
             'parts' => [['text' => $userMessage]]
@@ -227,3 +237,4 @@ function checkAIRateLimit(int $userId, string $feature, int $maxPerHour = 20): v
         exit();
     }
 }
+
