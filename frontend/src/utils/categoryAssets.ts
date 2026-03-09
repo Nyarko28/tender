@@ -1,4 +1,6 @@
 // Common stop words to remove from tender titles
+import { API_BASE_URL } from '@/services/api';
+
 const STOP_WORDS = [
   'supply of',
   'purchase of',
@@ -95,8 +97,8 @@ export function getTenderImage(tender: { id?: number; title?: string | null; cat
     // Step 6: Replace static category images with tender-specific image endpoint.
     // This endpoint is deterministic + cached permanently server-side.
     if (!tender.id) return '';
-    // Use relative path so it works across environments (Vite proxy / prod domain)
-    return `/api/tenders/image?id=${tender.id}`;
+    // Use absolute API base URL so it works across environments (local dev / Vercel with separate backend)
+    return `${API_BASE_URL}/tenders/image?id=${tender.id}`;
   } catch {
     return getFallbackImage(tender);
   }
