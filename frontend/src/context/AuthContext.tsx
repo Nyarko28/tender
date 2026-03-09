@@ -76,7 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async (data: Parameters<typeof authService.register>[0]) => {
-    await authService.register(data);
+    const result = await authService.register(data);
+    if (!result || !result.user_id) {
+      throw new Error('Registration failed: malformed server response');
+    }
     setState((s) => ({ ...s, loading: false }));
   }, []);
 

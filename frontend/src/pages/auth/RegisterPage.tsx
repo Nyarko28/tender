@@ -23,7 +23,6 @@ const schema = z.object({
     phone: z.string().optional(),
     website: z.string().optional(),
     category: z.string().optional(),
-    categories: z.array(z.string()).min(1, 'Select at least one category'),
     tax_id: z.string().optional(),
 });
 
@@ -55,6 +54,8 @@ export function RegisterPage() {
   });
 
   const onSubmit = async (data: FormData) => {
+    console.log('Registration submit clicked', { ...data, categories: selectedCategories });
+    
     if (selectedCategories.length === 0) {
       toastError('Please select at least one category');
       return;
@@ -65,6 +66,7 @@ export function RegisterPage() {
       toastSuccess('Registration successful. Your account is pending approval.');
       navigate('/login');
     } catch (e) {
+      console.error('Registration error:', e);
       toastError(e instanceof Error ? e.message : 'Registration failed');
     } finally {
       setLoading(false);
