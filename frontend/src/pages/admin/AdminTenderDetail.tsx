@@ -6,6 +6,7 @@ import { bidsService } from '@/services/bids';
 // import { contractService } from '@/services/contractService'; // reserved for future use
 // import { reportsService } from '@/services/reports'; // reserved for future use
 import { getCategories } from '@/services/categories';
+import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,13 @@ export function AdminTenderDetail() {
 
   const [activeTab, setActiveTab] = useState<TabType>('description');
   const [visitedTabs, setVisitedTabs] = useState<Set<TabType>>(new Set(['description']));
+  const [bidModalOpen, setBidModalOpen] = useState(false);
+  const [selectedBidId, setSelectedBidId] = useState<number | null>(null);
+  const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
+  const [tenderDocUploading, setTenderDocUploading] = useState(false);
+  const [downloadingTenderDocId, setDownloadingTenderDocId] = useState<number | null>(null);
+  const [removingTenderDocId, setRemovingTenderDocId] = useState<number | null>(null);
+  const tenderDocInputRef = useRef<HTMLInputElement>(null);
 
   const { data: tender, isLoading } = useQuery({
     queryKey: ['tender', tenderId],
@@ -70,8 +78,17 @@ export function AdminTenderDetail() {
   const { data: bidsData } = useQuery({
     queryKey: ['bids', tenderId],
     queryFn: () => bidsService.list({ tender_id: tenderId }),
-    enabled: tenderId > 0 && visitedTabs.has('bids'),
+    // Load bids as soon as the tender is open so stats (e.g. Bids Received) show the real count
+    // without requiring a click on the Bids tab first.
+    enabled: tenderId > 0,
     staleTime: 30000,
+  });
+
+  const { data: selectedBid, isLoading: selectedBidLoading } = useQuery({
+    queryKey: ['bid', selectedBidId],
+    queryFn: () => bidsService.show(selectedBidId as number),
+    enabled: bidModalOpen && typeof selectedBidId === 'number' && selectedBidId > 0,
+    staleTime: 0,
   });
 
   // contractId query - commented out as not currently used
@@ -154,6 +171,108 @@ export function AdminTenderDetail() {
   const formatBudget = (amount?: number) => {
     if (amount == null) return '—';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
+
+  const openBidModal = (bidId: number) => {
+    setSelectedBidId(bidId);
+    setBidModalOpen(true);
+  };
+
+  const closeBidModal = () => {
+    setBidModalOpen(false);
+    setSelectedBidId(null);
+    setDownloadingDocId(null);
+  };
+
+  const downloadTenderDocument = async (docId: number, filename: string) => {
+    try {
+      setDownloadingTenderDocId(docId);
+      const res = await api.get('/uploads/download', {
+        params: { type: 'tender_doc', id: docId },
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || `tender_document_${docId}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toastError(e instanceof Error ? e.message : 'Download failed');
+    } finally {
+      setDownloadingTenderDocId(null);
+    }
+  };
+
+  const uploadTenderDocuments = async (files: FileList | null) => {
+    if (!files?.length || !tenderId) return;
+    try {
+      setTenderDocUploading(true);
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const uploadRes = await api.post<{ success: boolean; data: { filename: string; original_name: string; file_size: number } }>(
+          '/uploads/upload',
+          fd,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        const ref = uploadRes.data?.data;
+        if (!ref?.filename) {
+          throw new Error('Upload failed: malformed server response');
+        }
+        await tendersService.addDocument(tenderId, {
+          filename: ref.filename,
+          original_name: ref.original_name || file.name,
+          file_size: ref.file_size,
+        });
+      }
+      toastSuccess('Document(s) attached to tender');
+      queryClient.invalidateQueries({ queryKey: ['tender', tenderId] });
+    } catch (e) {
+      toastError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setTenderDocUploading(false);
+      if (tenderDocInputRef.current) tenderDocInputRef.current.value = '';
+    }
+  };
+
+  const removeTenderDocument = async (docId: number) => {
+    try {
+      setRemovingTenderDocId(docId);
+      await tendersService.removeDocument(docId);
+      toastSuccess('Document removed');
+      queryClient.invalidateQueries({ queryKey: ['tender', tenderId] });
+    } catch (e) {
+      toastError(e instanceof Error ? e.message : 'Remove failed');
+    } finally {
+      setRemovingTenderDocId(null);
+    }
+  };
+
+  const downloadBidDocument = async (docId: number, filename: string) => {
+    try {
+      setDownloadingDocId(docId);
+      const res = await api.get('/uploads/download', {
+        params: { type: 'bid_doc', id: docId },
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || `bid_document_${docId}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toastError(e instanceof Error ? e.message : 'Download failed');
+    } finally {
+      setDownloadingDocId(null);
+    }
   };
 
   const exportBids = () => {
@@ -275,7 +394,7 @@ export function AdminTenderDetail() {
     { icon: <Inbox className="h-4 w-4" />, label: 'Bids Received', value: bidsData?.total ?? 0 },
     { icon: <Users className="h-4 w-4" />, label: 'Evaluators', value: 0 }, // TODO: fetch evaluator count
     { icon: <Clock className="h-4 w-4" />, label: 'Days Left', value: timeLeft?.passed ? 'Closed' : timeLeft?.text.split(' ')[0] || '—' },
-    { icon: <FileText className="h-4 w-4" />, label: 'Documents', value: 0 }, // TODO: fetch document count
+    { icon: <FileText className="h-4 w-4" />, label: 'Documents', value: tender?.documents?.length ?? 0 },
   ];
 
   // Tab Content
@@ -422,7 +541,7 @@ export function AdminTenderDetail() {
                       <td className="py-2">{formatDate(b.submitted_at)}</td>
                       <td className="py-2 text-right">—</td>
                       <td className="py-2 text-center">
-                        <Button size="sm" variant="outline">View</Button>
+                        <Button size="sm" variant="outline" onClick={() => openBidModal(b.id)}>View</Button>
                       </td>
                     </tr>
                   ))}
@@ -430,6 +549,107 @@ export function AdminTenderDetail() {
               </table>
             ) : (
               <div className="rounded-lg border border-dashed border-gray-300 py-8 text-center text-gray-500">No bids received yet</div>
+            )}
+
+            {/* Bid details modal */}
+            {bidModalOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                onMouseDown={(e) => {
+                  if (e.target === e.currentTarget) closeBidModal();
+                }}
+                role="dialog"
+                aria-modal="true"
+              >
+                <div className="w-full max-w-3xl rounded-xl bg-white shadow-xl">
+                  <div className="flex items-center justify-between border-b px-5 py-4">
+                    <div>
+                      <h4 className="text-lg font-semibold">Bid Details</h4>
+                      <p className="text-sm text-gray-500">
+                        {selectedBidId ? `Bid #${selectedBidId}` : '—'}
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={closeBidModal}>Close</Button>
+                  </div>
+
+                  <div className="max-h-[75vh] overflow-auto p-5">
+                    {selectedBidLoading && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                        Loading bid...
+                      </div>
+                    )}
+
+                    {!selectedBidLoading && selectedBid && (
+                      <div className="space-y-5">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-gray-500">Supplier</p>
+                            <p className="font-medium">{(selectedBid as any).supplier_name ?? '—'}</p>
+                            <p className="text-sm text-gray-600">{(selectedBid as any).company_name ?? '—'}</p>
+                          </div>
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-gray-500">Status</p>
+                            <div className="mt-1">
+                              <Badge variant={(selectedBid as any).status === 'accepted' ? 'success' : (selectedBid as any).status === 'rejected' ? 'destructive' : 'secondary'}>
+                                {(selectedBid as any).status ?? '—'}
+                              </Badge>
+                            </div>
+                            <p className="mt-2 text-xs text-gray-500">Submitted</p>
+                            <p className="text-sm font-medium">{formatDate((selectedBid as any).submitted_at)}</p>
+                          </div>
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-gray-500">Bid Amount</p>
+                            <p className="text-lg font-semibold">{formatBudget((selectedBid as any).bid_amount)}</p>
+                          </div>
+                          <div className="rounded-lg border p-3">
+                            <p className="text-xs text-gray-500">Tender</p>
+                            <p className="font-medium">{(selectedBid as any).tender_title ?? safeTender.title ?? '—'}</p>
+                            <p className="text-sm text-gray-600">{(selectedBid as any).reference_number ?? safeTender.reference_number ?? '—'}</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border p-4">
+                          <p className="mb-2 text-sm font-semibold">Technical Proposal</p>
+                          <p className="whitespace-pre-wrap text-sm text-gray-700">
+                            {(selectedBid as any).technical_proposal ?? '—'}
+                          </p>
+                        </div>
+
+                        <div className="rounded-lg border p-4">
+                          <p className="mb-3 text-sm font-semibold">Documents</p>
+                          {(selectedBid as any).documents?.length ? (
+                            <div className="space-y-2">
+                              {(selectedBid as any).documents.map((d: any) => (
+                                <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-gray-50 px-3 py-2">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium">{d.original_name ?? d.filename ?? `Document #${d.id}`}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {d.document_type ? `${d.document_type}` : 'Document'}
+                                      {d.file_size ? ` • ${Math.round(Number(d.file_size) / 1024)} KB` : ''}
+                                      {d.uploaded_at ? ` • ${formatDate(d.uploaded_at)}` : ''}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={downloadingDocId === d.id}
+                                    onClick={() => downloadBidDocument(d.id, d.original_name ?? '')}
+                                  >
+                                    {downloadingDocId === d.id ? 'Downloading...' : 'Download'}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-600">No documents attached to this bid.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         );
@@ -502,16 +722,76 @@ export function AdminTenderDetail() {
       case 'documents':
         return (
           <div>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Documents</h3>
-              <Button size="sm" variant="outline" className="gap-1">
-                <Upload className="h-4 w-4" /> Upload Document
+            <input
+              ref={tenderDocInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+              onChange={(e) => uploadTenderDocuments(e.target.files)}
+            />
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-lg font-semibold">Tender documents</h3>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                disabled={tenderDocUploading}
+                onClick={() => tenderDocInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" /> {tenderDocUploading ? 'Uploading…' : 'Upload documents'}
               </Button>
             </div>
-            <div className="rounded-lg border border-dashed border-gray-300 py-8 text-center text-gray-500">
-              <FileText className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-              No documents uploaded yet
-            </div>
+            <p className="mb-4 text-xs text-gray-500">
+              These files are part of the official tender pack (RFP, BOQ, specs). Suppliers with access to this tender can download them when the tender is published.
+            </p>
+            {tender.documents && tender.documents.length > 0 ? (
+              <div className="space-y-2">
+                {tender.documents.map((d) => (
+                  <div
+                    key={d.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{d.original_name ?? d.filename}</p>
+                      <p className="text-xs text-gray-500">
+                        {d.file_size ? `${Math.round(Number(d.file_size) / 1024)} KB` : '—'}
+                        {d.uploaded_at ? ` • ${formatDate(d.uploaded_at)}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={downloadingTenderDocId === d.id || tenderDocUploading}
+                        onClick={() => downloadTenderDocument(d.id, d.original_name ?? '')}
+                      >
+                        {downloadingTenderDocId === d.id ? 'Downloading…' : 'Download'}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                        disabled={removingTenderDocId === d.id || tenderDocUploading}
+                        onClick={() => {
+                          if (window.confirm('Remove this document from the tender?')) removeTenderDocument(d.id);
+                        }}
+                      >
+                        {removingTenderDocId === d.id ? 'Removing…' : 'Remove'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-gray-300 py-8 text-center text-gray-500">
+                <FileText className="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                No tender documents yet. Upload PDF, Word, Excel, or images (max 10MB each).
+              </div>
+            )}
           </div>
         );
 

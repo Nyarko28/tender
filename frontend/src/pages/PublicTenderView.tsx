@@ -1,11 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { tendersService } from '@/services/tenders';
+import { API_BASE_URL } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CategoryBadge } from '@/components/tenders/CategoryBadge';
 import { TagChip } from '@/components/tenders/TagChip';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, FileText } from 'lucide-react';
 
 export function PublicTenderView() {
   const { id } = useParams<{ id: string }>();
@@ -81,6 +82,29 @@ export function PublicTenderView() {
               <p className="text-sm text-gray-600">
                 Budget: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(tender.budget)}
               </p>
+            )}
+            {tender.documents && tender.documents.length > 0 && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-gray-600" />
+                  <h3 className="text-sm font-semibold text-gray-900">Tender documents</h3>
+                </div>
+                <ul className="space-y-2">
+                  {tender.documents.map((d) => (
+                    <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate text-gray-800">{d.original_name}</span>
+                      <a
+                        href={`${API_BASE_URL}/tenders/public-document-download?id=${d.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-primary hover:bg-gray-50"
+                      >
+                        Download
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </CardContent>
         </Card>

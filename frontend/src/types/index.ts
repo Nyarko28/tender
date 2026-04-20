@@ -79,6 +79,7 @@ export interface Bid {
   supplier_id?: number;
   bid_amount?: number;
   technical_proposal?: string;
+  delivery_time?: string;
   status: BidStatus;
   submitted_at?: string;
   created_at?: string;

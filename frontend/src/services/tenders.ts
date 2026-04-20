@@ -44,7 +44,14 @@ export const tendersService = {
     return api.post<{ success: boolean; data: { supplier_id: number } }>('/tenders/award', { tender_id: tenderId, bid_id: bidId }).then((r) => r.data.data);
   },
   addDocument(tenderId: number, file: { filename: string; original_name: string; file_size: number }) {
-    return api.post('/tenders/documents', { tender_id: tenderId, ...file });
+    return api
+      .post<{ success: boolean; data: { id: number } }>('/tenders/documents', { tender_id: tenderId, ...file })
+      .then((r) => r.data.data);
+  },
+  removeDocument(documentId: number) {
+    return api
+      .delete<{ success: boolean; data: { message: string } }>(`/tenders/documents-delete?id=${documentId}`)
+      .then((r) => r.data.data);
   },
   assignEvaluators(tenderId: number, evaluatorIds: number[]) {
     return api.post('/tenders/evaluators', { tender_id: tenderId, evaluator_ids: evaluatorIds });
