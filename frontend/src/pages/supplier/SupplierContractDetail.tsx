@@ -74,6 +74,20 @@ export function SupplierContractDetail() {
 
   const statusBadge = statusConfig[contract.status] ?? statusConfig.draft;
   const bothSigned = contract.signed_by_admin && contract.signed_by_supplier;
+  const clauseItems = [
+    { label: 'Contract Date', value: contract.contract_date || '—' },
+    { label: 'Effective Date', value: contract.effective_date || '—' },
+    { label: 'Buyer Name & Address', value: contract.buyer_name_address || '' },
+    { label: 'Supplier Name & Address', value: contract.supplier_name_address || '' },
+    { label: 'Specification of Goods/Services', value: contract.specification_of_goods || '' },
+    { label: 'Payment Terms & Methods', value: contract.payment_terms_methods || '' },
+    { label: 'Warranty Terms', value: contract.warranty_terms || '' },
+    { label: 'Breach & Remedies', value: contract.breach_and_remedies || '' },
+    { label: 'Delivery Terms', value: contract.delivery_terms || '' },
+    { label: 'Price Terms', value: contract.price_terms || '' },
+    { label: 'Price Adjustment Terms', value: contract.price_adjustment_terms || '' },
+    { label: 'Termination Terms', value: contract.termination_terms || '' },
+  ];
 
   return (
     <div className="p-6">
@@ -144,6 +158,22 @@ export function SupplierContractDetail() {
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-sm text-gray-700">{contract.description}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {clauseItems.some((c) => c.value && c.value !== '—') && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">Contract Clauses</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {clauseItems.filter((c) => c.value && c.value !== '—').map((c) => (
+                <div key={c.label}>
+                  <p className="text-xs font-semibold uppercase text-gray-500">{c.label}</p>
+                  <p className="whitespace-pre-wrap text-sm text-gray-700">{c.value}</p>
+                </div>
+              ))}
             </CardContent>
           </Card>
         )}

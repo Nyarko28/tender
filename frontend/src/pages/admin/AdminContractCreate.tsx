@@ -21,6 +21,18 @@ const schema = z
     contract_value: z.number().min(0.01, 'Value must be positive'),
     start_date: z.string().min(1, 'Start date is required'),
     end_date: z.string().min(1, 'End date is required'),
+    contract_date: z.string().optional(),
+    effective_date: z.string().optional(),
+    buyer_name_address: z.string().optional(),
+    supplier_name_address: z.string().optional(),
+    specification_of_goods: z.string().optional(),
+    payment_terms_methods: z.string().optional(),
+    warranty_terms: z.string().optional(),
+    breach_and_remedies: z.string().optional(),
+    delivery_terms: z.string().optional(),
+    price_terms: z.string().optional(),
+    price_adjustment_terms: z.string().optional(),
+    termination_terms: z.string().optional(),
   })
   .refine((d) => !d.start_date || !d.end_date || new Date(d.end_date) > new Date(d.start_date), {
     message: 'End date must be after start date',
@@ -41,7 +53,12 @@ export function AdminContractCreate() {
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tender_id: 0, supplier_id: 0, contract_value: 0, title: '', description: '', start_date: '', end_date: '' },
+    defaultValues: {
+      tender_id: 0, supplier_id: 0, contract_value: 0, title: '', description: '', start_date: '', end_date: '',
+      contract_date: '', effective_date: '', buyer_name_address: '', supplier_name_address: '',
+      specification_of_goods: '', payment_terms_methods: '', warranty_terms: '', breach_and_remedies: '',
+      delivery_terms: '', price_terms: '', price_adjustment_terms: '', termination_terms: '',
+    },
   });
 
   const selectedTenderId = watch('tender_id');
@@ -65,6 +82,18 @@ export function AdminContractCreate() {
         contract_value: data.contract_value,
         start_date: data.start_date,
         end_date: data.end_date,
+        contract_date: data.contract_date,
+        effective_date: data.effective_date,
+        buyer_name_address: data.buyer_name_address,
+        supplier_name_address: data.supplier_name_address,
+        specification_of_goods: data.specification_of_goods,
+        payment_terms_methods: data.payment_terms_methods,
+        warranty_terms: data.warranty_terms,
+        breach_and_remedies: data.breach_and_remedies,
+        delivery_terms: data.delivery_terms,
+        price_terms: data.price_terms,
+        price_adjustment_terms: data.price_adjustment_terms,
+        termination_terms: data.termination_terms,
         milestones: milestones.filter((m) => m.title.trim() && m.due_date),
       }),
     onSuccess: (data) => {
@@ -158,6 +187,60 @@ export function AdminContractCreate() {
                   <Label>End date *</Label>
                   <Input type="date" {...register('end_date')} className="mt-1" />
                   {errors.end_date && <p className="text-sm text-red-600">{errors.end_date.message}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Contract date</Label>
+                  <Input type="date" {...register('contract_date')} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Effective date</Label>
+                  <Input type="date" {...register('effective_date')} className="mt-1" />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900">Contract Clauses</h3>
+                <div>
+                  <Label>Buyer name & address</Label>
+                  <textarea {...register('buyer_name_address')} rows={2} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Supplier name & address</Label>
+                  <textarea {...register('supplier_name_address')} rows={2} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Specification of goods/services</Label>
+                  <textarea {...register('specification_of_goods')} rows={3} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Payment terms & methods</Label>
+                  <textarea {...register('payment_terms_methods')} rows={3} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Warranty terms</Label>
+                  <textarea {...register('warranty_terms')} rows={2} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Breach and remedies</Label>
+                  <textarea {...register('breach_and_remedies')} rows={3} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Delivery terms</Label>
+                  <textarea {...register('delivery_terms')} rows={2} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Price terms</Label>
+                  <textarea {...register('price_terms')} rows={2} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Price adjustment terms</Label>
+                  <textarea {...register('price_adjustment_terms')} rows={2} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <Label>Termination terms</Label>
+                  <textarea {...register('termination_terms')} rows={3} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
                 </div>
               </div>
 

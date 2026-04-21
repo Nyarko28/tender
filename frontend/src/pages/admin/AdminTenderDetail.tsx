@@ -147,6 +147,16 @@ export function AdminTenderDetail() {
     },
     onError: (e) => toastError(e instanceof Error ? e.message : 'Failed to finalize evaluation'),
   });
+  const awardMutation = useMutation({
+    mutationFn: (bidId: number) => tendersService.award(tenderId, bidId),
+    onSuccess: () => {
+      toastSuccess('Tender awarded successfully');
+      queryClient.invalidateQueries({ queryKey: ['tender', tenderId] });
+      queryClient.invalidateQueries({ queryKey: ['bids', tenderId] });
+      queryClient.invalidateQueries({ queryKey: ['evaluations', tenderId] });
+    },
+    onError: (e) => toastError(e instanceof Error ? e.message : 'Failed to award tender'),
+  });
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -767,7 +777,22 @@ export function AdminTenderDetail() {
                         <td className="py-2">{r.bid.company_name ?? '—'}</td>
                         <td className="py-2 text-right font-bold">{r.weightedScore.toFixed(2)}</td>
                         <td className="py-2 text-center">
-                          <Button size="sm" variant="outline" onClick={() => setScoreDetailBidId(r.bid.id)}>View Scores</Button>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setScoreDetailBidId(r.bid.id)}>View Scores</Button>
+                            {tender.status === 'evaluated' && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  if (window.confirm(`Award tender to ${r.bid.company_name ?? r.bid.supplier_name ?? `Bid #${r.bid.id}`}?`)) {
+                                    awardMutation.mutate(r.bid.id);
+                                  }
+                                }}
+                                disabled={awardMutation.isPending}
+                              >
+                                {awardMutation.isPending ? 'Awarding...' : 'Award'}
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -849,10 +874,8 @@ export function AdminTenderDetail() {
                     </Button>
                   </div>
                 )}
-                {tender.status === 'evaluated' && (
-                  <div className="mt-4 flex gap-2">
-                    <Button>Award Tender</Button>
-                  </div>
+                {tender.status === 'evaluated' && rankingRows.length === 0 && (
+                  <p className="mt-4 text-sm text-gray-500">No ranked bids available to award yet.</p>
                 )}
               </div>
             )}

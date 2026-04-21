@@ -643,6 +643,21 @@ export function AdminContractDetail() {
     ? ((ratingForm.quality_score + ratingForm.delivery_score + ratingForm.communication_score + ratingForm.compliance_score) / 4).toFixed(1)
     : null;
 
+  const clauseItems = [
+    { label: 'Contract Date', value: contract.contract_date || '—' },
+    { label: 'Effective Date', value: contract.effective_date || '—' },
+    { label: 'Buyer Name & Address', value: contract.buyer_name_address || '' },
+    { label: 'Supplier Name & Address', value: contract.supplier_name_address || '' },
+    { label: 'Specification of Goods/Services', value: contract.specification_of_goods || '' },
+    { label: 'Payment Terms & Methods', value: contract.payment_terms_methods || '' },
+    { label: 'Warranty Terms', value: contract.warranty_terms || '' },
+    { label: 'Breach & Remedies', value: contract.breach_and_remedies || '' },
+    { label: 'Delivery Terms', value: contract.delivery_terms || '' },
+    { label: 'Price Terms', value: contract.price_terms || '' },
+    { label: 'Price Adjustment Terms', value: contract.price_adjustment_terms || '' },
+    { label: 'Termination Terms', value: contract.termination_terms || '' },
+  ];
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -753,6 +768,22 @@ export function AdminContractDetail() {
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-wrap text-sm text-slate-700">{contract.description}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {clauseItems.some((c) => c.value && c.value !== '—') && (
+            <Card className="border border-slate-100 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold">Contract Clauses</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {clauseItems.filter((c) => c.value && c.value !== '—').map((c) => (
+                  <div key={c.label}>
+                    <p className="text-xs font-semibold uppercase text-slate-500">{c.label}</p>
+                    <p className="whitespace-pre-wrap text-sm text-slate-700">{c.value}</p>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}

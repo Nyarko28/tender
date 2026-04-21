@@ -27,6 +27,18 @@ export const contractService = {
     contract_value: number;
     start_date: string;
     end_date: string;
+    contract_date?: string;
+    effective_date?: string;
+    buyer_name_address?: string;
+    supplier_name_address?: string;
+    specification_of_goods?: string;
+    payment_terms_methods?: string;
+    warranty_terms?: string;
+    breach_and_remedies?: string;
+    delivery_terms?: string;
+    price_terms?: string;
+    price_adjustment_terms?: string;
+    termination_terms?: string;
     milestones?: Array<{ title: string; description?: string; due_date: string }>;
   }) {
     return api
