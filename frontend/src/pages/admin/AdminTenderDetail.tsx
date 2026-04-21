@@ -842,7 +842,7 @@ export function AdminTenderDetail() {
                     </div>
                   </div>
                 )}
-                {(tender.status === 'closed' || tender.status === 'published') && (
+                {tender.status === 'closed' && (
                   <div className="mt-4 flex gap-2">
                     <Button onClick={() => finalizeEvaluationMutation.mutate()} disabled={finalizeEvaluationMutation.isPending}>
                       {finalizeEvaluationMutation.isPending ? 'Finalizing...' : 'Finalize Evaluation'}
