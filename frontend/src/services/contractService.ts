@@ -59,6 +59,24 @@ export const contractService = {
       .then((r) => r.data.data);
   },
 
+  reject(contract_id: number, reason: string) {
+    return api
+      .post<{ success: boolean; data: { message: string } }>('/contracts/reject', {
+        contract_id,
+        reason,
+      })
+      .then((r) => r.data.data);
+  },
+
+  resolveRejection(contract_id: number, note?: string) {
+    return api
+      .post<{ success: boolean; data: { message: string } }>('/contracts/resolve-rejection', {
+        contract_id,
+        note,
+      })
+      .then((r) => r.data.data);
+  },
+
   milestoneCreate(data: { contract_id: number; title: string; description?: string; due_date: string }) {
     return api
       .post<{ success: boolean; data: { id: number } }>('/contracts/milestones/create', data)

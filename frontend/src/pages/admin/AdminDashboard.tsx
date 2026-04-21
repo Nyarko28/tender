@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { analyticsService } from '@/services/analytics';
+import { emailService } from '@/services/email';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { toastError, toastSuccess } from '@/hooks/useToast';
 import {
   FileText,
   Users,
@@ -121,6 +124,11 @@ export function AdminDashboard() {
 
   const greeting = getGreeting();
   const pendingCount = summary?.pending_approvals ?? 0;
+  const sendTestEmailMutation = useMutation({
+    mutationFn: () => emailService.sendTestEmail(),
+    onSuccess: (data) => toastSuccess(`Test email sent to ${data.to}`),
+    onError: (e) => toastError(e instanceof Error ? e.message : 'Failed to send test email'),
+  });
 
   const statValues: Record<string, number> = {
     tenders: summary?.total_tenders ?? 0,
@@ -263,6 +271,15 @@ export function AdminDashboard() {
             <span className="hidden xs:inline">View Reports</span>
             <span className="xs:hidden">Reports</span>
           </Link>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full border-2 border-[#0ea5e9] px-3 py-1.5 text-xs font-medium text-[#0ea5e9] hover:bg-[#0ea5e9] hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+            onClick={() => sendTestEmailMutation.mutate()}
+            disabled={sendTestEmailMutation.isPending}
+          >
+            {sendTestEmailMutation.isPending ? 'Sending...' : 'Send Test Email'}
+          </Button>
         </div>
       </Card>
 

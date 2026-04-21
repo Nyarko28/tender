@@ -544,6 +544,8 @@ export function AdminContractDetail() {
   const [newMilestone, setNewMilestone] = useState<{ title: string; due_date: string } | null>(null);
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [signConfirmOpen, setSignConfirmOpen] = useState(false);
+  const [resolveRejectionOpen, setResolveRejectionOpen] = useState(false);
+  const [resolveNote, setResolveNote] = useState('');
   const [uploadType, setUploadType] = useState('contract');
   const [clausesEditing, setClausesEditing] = useState(false);
   const [clausesDraft, setClausesDraft] = useState({
@@ -650,6 +652,17 @@ export function AdminContractDetail() {
     onError: (e) => toastError(e instanceof Error ? e.message : 'Failed'),
   });
 
+  const resolveRejectionMutation = useMutation({
+    mutationFn: () => contractService.resolveRejection(contractId, resolveNote.trim() || undefined),
+    onSuccess: () => {
+      toastSuccess('Rejection resolved. Contract moved to draft.');
+      setResolveRejectionOpen(false);
+      setResolveNote('');
+      queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
+    },
+    onError: (e) => toastError(e instanceof Error ? e.message : 'Failed to resolve rejection'),
+  });
+
   // Computed
   if (isLoading || !contract) {
     return (
@@ -740,6 +753,21 @@ export function AdminContractDetail() {
         <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
           <Check className="mr-2 inline h-5 w-5" />
           <strong>This contract was successfully completed.</strong>
+        </div>
+      )}
+
+      {contract.supplier_rejected && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+          <AlertTriangle className="mr-2 inline h-5 w-5" />
+          <strong>Supplier rejected this contract.</strong>
+          {contract.supplier_rejection_reason ? (
+            <p className="mt-1 text-sm">Reason: {contract.supplier_rejection_reason}</p>
+          ) : null}
+          <div className="mt-3">
+            <Button size="sm" onClick={() => setResolveRejectionOpen(true)}>
+              Resolve Rejection
+            </Button>
+          </div>
         </div>
       )}
 
@@ -1096,6 +1124,41 @@ export function AdminContractDetail() {
                 <Button variant="outline" onClick={() => setSignConfirmOpen(false)}>Cancel</Button>
                 <Button onClick={() => signMutation.mutate()} disabled={signMutation.isPending}>
                   {signMutation.isPending ? 'Signing...' : 'Confirm & Sign'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Resolve Rejection Modal */}
+      {resolveRejectionOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setResolveRejectionOpen(false)}>
+          <Card className="w-full max-w-[460px] animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>Resolve Supplier Rejection</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600">
+                This will clear rejection flags and move the contract back to draft so supplier can review/sign again.
+              </p>
+              <div className="mt-3">
+                <Label htmlFor="resolve-note">Optional note to supplier</Label>
+                <textarea
+                  id="resolve-note"
+                  value={resolveNote}
+                  onChange={(e) => setResolveNote(e.target.value)}
+                  rows={3}
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="We updated clauses based on your feedback..."
+                />
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setResolveRejectionOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => resolveRejectionMutation.mutate()} disabled={resolveRejectionMutation.isPending}>
+                  {resolveRejectionMutation.isPending ? 'Resolving...' : 'Resolve & Reopen'}
                 </Button>
               </div>
             </CardContent>

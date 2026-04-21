@@ -18,6 +18,7 @@ import { CTABanner } from '@/components/landing/CTABanner';
 import { Footer } from '@/components/landing/Footer';
 import { getCategoryAsset, getTenderImage, getFallbackImage } from '@/utils/categoryAssets';
 import { ProcurEaseLogo } from '@/components/ui/ProcurEaseLogo';
+import { InstallAppButton } from '@/components/InstallAppButton';
 import { Clock } from 'lucide-react';
 
 function Navbar() {
@@ -39,6 +40,7 @@ function Navbar() {
           <span>ProcurEase</span>
         </Link>
         <div className="flex items-center gap-4">
+          <InstallAppButton />
           <Link to="/#tenders" className="text-sm font-medium text-gray-600 hover:text-primary">
             Tenders
           </Link>
@@ -175,11 +177,6 @@ function ActiveTenders() {
                     <Clock className="h-4 w-4 shrink-0" />
                     <Countdown deadline={t.submission_deadline} />
                   </div>
-                  {t.budget != null && (
-                    <p className="mt-1 text-sm text-gray-600">
-                      Budget: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(t.budget)}
-                    </p>
-                  )}
                   <Button
                     variant="outline"
                     className="mt-4 w-full group-hover:bg-primary group-hover:text-white"

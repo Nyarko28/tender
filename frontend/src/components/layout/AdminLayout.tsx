@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
+import { InstallAppButton } from '@/components/InstallAppButton';
 import FloatingProcureAI from '@/components/ai/FloatingProcureAI';
 import { cn } from '@/utils/cn';
 import api from '@/services/api';
@@ -231,6 +232,7 @@ export function AdminLayout() {
             <h1 className="text-lg font-semibold text-gray-900 md:text-xl">{pageTitle}</h1>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
+            <InstallAppButton />
             <NotificationsDropdown />
             <span className="hidden text-sm text-gray-600 sm:inline">{user?.name}</span>
             <span

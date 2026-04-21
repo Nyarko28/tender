@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 require_once dirname(dirname(__DIR__)) . '/config/auth-middleware.php';
 require_once dirname(dirname(__DIR__)) . '/helpers/validate.php';
 require_once dirname(dirname(__DIR__)) . '/helpers/audit.php';
+require_once dirname(dirname(__DIR__)) . '/helpers/mailer.php';
 
 /**
  * Draft contract clauses using AI (best-effort).
@@ -214,6 +215,21 @@ try {
         $pdo->prepare("UPDATE contracts SET contract_number = ? WHERE id = ?")->execute([$contractNumber, $contractId]);
 
         auditLog($pdo, (int) $user['user_id'], 'contract_auto_created', 'contracts', $contractId, $contractNumber);
+        $pdo->prepare("INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)")
+            ->execute([
+                $supplierId,
+                'Contract created',
+                'A contract has been created for you: ' . $title . ' (' . $contractNumber . '). Please review and sign.',
+            ]);
+        if (!empty($supplierDetail['email'])) {
+            $mailText = 'A contract has been created for you: ' . $title . ' (' . $contractNumber . '). Please log in to review and sign.';
+            sendMail(
+                (string) $supplierDetail['email'],
+                'Contract created: ' . $title,
+                '<p>Hello ' . htmlspecialchars((string) ($supplierDetail['name'] ?? 'Supplier')) . ',</p><p>' . htmlspecialchars($mailText) . '</p>',
+                $mailText
+            );
+        }
     }
 } catch (Throwable $e) {
     error_log('Auto contract creation failed: ' . $e->getMessage());

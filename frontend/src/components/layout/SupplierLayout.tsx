@@ -20,6 +20,7 @@ import { notificationsService } from '@/services/notifications';
 import type { Notification } from '@/types';
 import { cn } from '@/utils/cn';
 import FloatingProcureAI from '@/components/ai/FloatingProcureAI';
+import { InstallAppButton } from '@/components/InstallAppButton';
 
 const SIDEBAR_WIDTH = 260;
 
@@ -284,6 +285,7 @@ export function SupplierLayout() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
+            <InstallAppButton />
             {/* Notification bell with dropdown */}
             <div className="relative">
               <button

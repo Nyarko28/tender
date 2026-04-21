@@ -26,6 +26,9 @@ export interface Contract {
   status: ContractStatus;
   signed_by_admin: boolean;
   signed_by_supplier: boolean;
+  supplier_rejected?: boolean;
+  supplier_rejected_at?: string | null;
+  supplier_rejection_reason?: string | null;
   admin_signed_at?: string | null;
   supplier_signed_at?: string | null;
   milestones: ContractMilestone[];

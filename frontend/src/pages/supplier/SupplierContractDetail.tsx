@@ -35,6 +35,7 @@ export function SupplierContractDetail() {
   const queryClient = useQueryClient();
   const [uploadType, setUploadType] = useState('correspondence');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const { data: contract, isLoading } = useQuery({
     queryKey: ['contract', contractId],
@@ -60,6 +61,16 @@ export function SupplierContractDetail() {
       toastSuccess('Document uploaded');
       queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
       setUploadFile(null);
+    },
+    onError: (e) => toastError(e instanceof Error ? e.message : 'Failed'),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: () => contractService.reject(contractId, rejectReason),
+    onSuccess: () => {
+      toastSuccess('Contract rejected');
+      setRejectReason('');
+      queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
     },
     onError: (e) => toastError(e instanceof Error ? e.message : 'Failed'),
   });
@@ -120,6 +131,15 @@ export function SupplierContractDetail() {
           </div>
         )}
 
+        {contract.supplier_rejected && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+            <strong>You rejected this contract.</strong>
+            {contract.supplier_rejection_reason ? (
+              <p className="mt-1 text-sm">Reason: {contract.supplier_rejection_reason}</p>
+            ) : null}
+          </div>
+        )}
+
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base">Details</CardTitle>
@@ -152,7 +172,7 @@ export function SupplierContractDetail() {
           </CardContent>
         </Card>
 
-        {!contract.signed_by_supplier && !['completed', 'terminated'].includes(contract.status) && (
+        {!contract.signed_by_supplier && !contract.supplier_rejected && !['completed', 'terminated'].includes(contract.status) && (
           <Card className="mb-6">
             <CardContent className="pt-6">
               {missingForSigning.length > 0 && (
@@ -166,6 +186,29 @@ export function SupplierContractDetail() {
               <Button onClick={() => signMutation.mutate()} disabled={signMutation.isPending || missingForSigning.length > 0}>
                 Sign Contract
               </Button>
+              <div className="mt-4 border-t pt-4">
+                <Label htmlFor="rejectReason" className="mb-2 block text-sm font-medium text-red-700">
+                  Reject contract (optional workflow)
+                </Label>
+                <textarea
+                  id="rejectReason"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="State why you are rejecting this contract..."
+                  className="w-full rounded-md border border-red-200 px-3 py-2 text-sm outline-none focus:border-red-400"
+                  rows={3}
+                />
+                <div className="mt-2">
+                  <Button
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                    onClick={() => rejectMutation.mutate()}
+                    disabled={rejectMutation.isPending || rejectReason.trim().length < 5}
+                  >
+                    {rejectMutation.isPending ? 'Rejecting...' : 'Reject Contract'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
