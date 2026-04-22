@@ -14,7 +14,7 @@ export const usersService = {
   listEvaluators: async (): Promise<User[]> => {
     const res = await api.get('/users/evaluators');
     if (res.data.success) {
-      return res.data.evaluators;
+      return res.data.data?.evaluators ?? [];
     }
     throw new Error(res.data.message || 'Failed to fetch evaluators');
   },

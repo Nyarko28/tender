@@ -5,6 +5,8 @@ import {
 } from 'recharts';
 import { Download, TrendingUp, FileText, Users, DollarSign, Award } from 'lucide-react';
 import api from '../../services/api';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const COLORS = ['#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899','#84cc16'];
 
@@ -63,6 +65,68 @@ export function AdminReports() {
     { label: 'Total Suppliers',     value: suppliers.total,       sub: `${suppliers.suspended} suspended`, icon: <Users size={20}/>, color: '#64748b', bg: '#f8fafc' },
   ];
 
+  const handleExportPdf = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const generatedAt = new Date().toLocaleString();
+
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Reports & Analytics', 40, 40);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Generated: ${generatedAt}`, 40, 58);
+
+    autoTable(doc, {
+      startY: 76,
+      head: [['Metric', 'Value', 'Notes']],
+      body: kpis.map((k) => [k.label, String(k.value), k.sub]),
+      styles: { fontSize: 9, cellPadding: 6 },
+      headStyles: { fillColor: [37, 99, 235] },
+      theme: 'grid',
+      margin: { left: 40, right: 40 },
+    });
+
+    const afterKpiY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 18 : 320;
+    autoTable(doc, {
+      startY: afterKpiY,
+      head: [['Section', 'Summary']],
+      body: [
+        ['Tenders', `Total: ${tenders.total}, Open: ${tenders.open}, Closed: ${tenders.closed}, Awarded: ${tenders.awarded}`],
+        ['Bids', `Total: ${bids.total}, Submitted: ${bids.submitted}, Accepted: ${bids.accepted}, Rejected: ${bids.rejected}`],
+        ['Suppliers', `Total: ${suppliers.total}, Active: ${suppliers.active}, Pending: ${suppliers.pending}, Suspended: ${suppliers.suspended}`],
+        ['Contracts', `Total: ${contracts.total}, Active: ${contracts.active}, Completed: ${contracts.completed}, Draft: ${contracts.draft}`],
+      ],
+      styles: { fontSize: 9, cellPadding: 6 },
+      headStyles: { fillColor: [16, 185, 129] },
+      theme: 'grid',
+      margin: { left: 40, right: 40 },
+    });
+
+    if (suppliers.top_bidders?.length) {
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text('Top Suppliers by Bid Activity', 40, 40);
+      autoTable(doc, {
+        startY: 56,
+        head: [['Company', 'Bids', 'Wins', 'Win Rate']],
+        body: suppliers.top_bidders.map((s: any) => [
+          s.company_name,
+          String(s.bid_count ?? 0),
+          String(s.wins ?? 0),
+          s.bid_count > 0 ? `${Math.round((s.wins / s.bid_count) * 100)}%` : '0%',
+        ]),
+        styles: { fontSize: 9, cellPadding: 6 },
+        headStyles: { fillColor: [139, 92, 246] },
+        theme: 'grid',
+        margin: { left: 40, right: 40 },
+      });
+    }
+
+    doc.save(`reports_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div style={{ padding: '28px', background: '#f8fafc', minHeight: '100vh' }}>
 
@@ -72,7 +136,10 @@ export function AdminReports() {
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Reports & Analytics</h1>
           <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '2px' }}>System-wide performance overview</p>
         </div>
-        <button style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'9px 16px', borderRadius:'10px', fontSize:'13px', fontWeight:600, cursor:'pointer', border:'none', background:'#2563eb', color:'white', fontFamily:'inherit' }}>
+        <button
+          onClick={handleExportPdf}
+          style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'9px 16px', borderRadius:'10px', fontSize:'13px', fontWeight:600, cursor:'pointer', border:'none', background:'#2563eb', color:'white', fontFamily:'inherit' }}
+        >
           <Download size={14} /> Export PDF
         </button>
       </div>

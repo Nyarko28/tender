@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tendersService } from '@/services/tenders';
+import { contractService } from '@/services/contractService';
 import { Button } from '@/components/ui/button';
 import { TenderFilterBar, type TenderFilterState } from '@/components/tenders/TenderFilterBar';
 import { CategoryBadge } from '@/components/tenders/CategoryBadge';
@@ -28,6 +29,7 @@ interface TenderCardProps {
   onPublish: (id: number) => void;
   onClose: (id: number) => void;
   onDelete: (id: number) => void;
+  onOpenContract: (tenderId: number) => void;
   isPublishing: boolean;
   isClosing: boolean;
   isDeleting: number | null;
@@ -43,7 +45,7 @@ function getTimeLeft(deadline: string): { text: string; urgent: boolean; passed:
   return { text: `${hours}h ${mins}m left`, urgent: true, passed: false };
 }
 
-function TenderCard({ tender, onPublish, onClose, onDelete, isPublishing, isClosing, isDeleting }: TenderCardProps) {
+function TenderCard({ tender, onPublish, onClose, onDelete, onOpenContract, isPublishing, isClosing, isDeleting }: TenderCardProps) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(tender.submission_deadline));
   const categoryAsset = getCategoryAsset(tender?.category_name);
   const [imageSrc, setImageSrc] = useState(() => {
@@ -114,7 +116,7 @@ function TenderCard({ tender, onPublish, onClose, onDelete, isPublishing, isClos
       case 'awarded':
         actions.push(
           { label: 'View', icon: <Eye className="h-3 w-3" />, variant: 'primary', onClick: () => navigate(`/admin/tenders/${tender.id}`) },
-          { label: 'Contract', icon: <FileText className="h-3 w-3" />, variant: 'outline', onClick: () => navigate(`/admin/tenders/${tender.id}`) }
+          { label: 'Contract', icon: <FileText className="h-3 w-3" />, variant: 'outline', onClick: () => onOpenContract(tender.id) }
         );
         break;
     }
@@ -315,6 +317,19 @@ export function AdminTenders() {
     deleteMutation.mutate(id, { onSettled: () => setDeletingId(null) });
   };
 
+  const handleOpenContract = async (tenderId: number) => {
+    try {
+      const contractId = await contractService.getContractIdByTenderId(tenderId);
+      if (contractId) {
+        window.location.href = `/admin/contracts/${contractId}`;
+        return;
+      }
+      toastError('No contract found for this tender yet.');
+    } catch (e) {
+      toastError(e instanceof Error ? e.message : 'Failed to open contract');
+    }
+  };
+
   return (
     <div>
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -382,6 +397,7 @@ export function AdminTenders() {
                 onPublish={handlePublish}
                 onClose={handleClose}
                 onDelete={handleDelete}
+                onOpenContract={handleOpenContract}
                 isPublishing={publishingId === tender.id}
                 isClosing={closingId === tender.id}
                 isDeleting={deletingId}

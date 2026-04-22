@@ -23,6 +23,8 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "file-saver": "^2.0.5",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.454.0",
     "pngjs": "^7.0.0",
     "react": "^19.2.0",
