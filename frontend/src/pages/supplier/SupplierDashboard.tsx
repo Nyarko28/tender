@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { tendersService } from '@/services/tenders';
 import { bidsService } from '@/services/bids';
 import { notificationsService } from '@/services/notifications';
+import { contractService } from '@/services/contractService';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -369,9 +370,11 @@ export function SupplierDashboard() {
   // Get contracts count
   const { data: contractsData } = useQuery({
     queryKey: ['supplier', 'contracts'],
-    queryFn: () => fetch(`${import.meta.env.VITE_API_URL || ''}/api/contracts/index.php`).then(r => r.json()),
+    queryFn: () => contractService.list(),
   });
-  const contractsCount = contractsData?.total || 0;
+  const contractsCount = Array.isArray(contractsData)
+    ? contractsData.filter((contract: any) => String(contract.status || '').toLowerCase() === 'active').length
+    : 0;
 
   // Get rating
   const { data: ratingData } = useQuery({
@@ -461,7 +464,7 @@ export function SupplierDashboard() {
         />
         <StatCard
           icon={FileCheck}
-          label="Contracts"
+          label="Active Contracts"
           value={contractsCount}
           color="purple"
           link="/supplier/contracts"

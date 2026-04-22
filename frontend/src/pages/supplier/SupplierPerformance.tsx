@@ -17,6 +17,10 @@ export function SupplierPerformance() {
   return (
     <div className="p-6">
       <h1 className="mb-6 text-2xl font-bold text-gray-900">My Performance Ratings</h1>
+      <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <span className="font-semibold">How calculated:</span> each contract is scored on Quality, Delivery, Communication, and
+        Compliance (1-5 each). The contract overall score is the average of those 4 scores, and your overall performance is the average of all your contract overall scores.
+      </div>
 
         {isLoading && (
           <div className="mt-8 flex justify-center">
