@@ -84,6 +84,7 @@ function App() {
               <Route path="contracts" element={<AdminContracts />} />
               <Route path="contracts/create" element={<AdminContractCreate />} />
               <Route path="contracts/:id" element={<AdminContractDetail />} />
+              <Route path="contracts/:id/edit" element={<AdminContractDetail />} />
               <Route path="intelligence" element={<ProcureAI />} />
             </Route>
 
