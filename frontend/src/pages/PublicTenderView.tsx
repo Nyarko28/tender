@@ -78,11 +78,6 @@ export function PublicTenderView() {
                 {isPast && ' (Closed)'}
               </span>
             </div>
-            {tender.budget != null && (
-              <p className="text-sm text-gray-600">
-                Budget: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(tender.budget)}
-              </p>
-            )}
             {tender.documents && tender.documents.length > 0 && (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <div className="mb-2 flex items-center gap-2">

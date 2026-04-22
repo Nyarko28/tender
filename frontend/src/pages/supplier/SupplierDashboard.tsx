@@ -159,12 +159,6 @@ function TenderCard({ tender, hasBid }: { tender: any; hasBid: boolean; onBid?: 
         </div>
 
         <div className="mt-3 flex flex-wrap gap-3 text-sm text-gray-600">
-          {tender.budget && (
-            <span className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              Budget: {formatUsd(Number(tender.budget))}
-            </span>
-          )}
           <span className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
             Closes: {new Date(tender.submission_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
